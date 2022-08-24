@@ -1,0 +1,17 @@
+#page {
+    display: flex;
+    flex-direction: row;
+    height: 100%
+}
+
+#news-pane {
+    flex-grow: 7;
+    background-color: blue;
+    height: 100%
+}
+
+#warnings-pane {
+    flex-grow: 3;
+    background-color: red;
+    height: 100%
+}
