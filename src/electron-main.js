@@ -1,29 +1,35 @@
-const { app, BrowserWindow } = require('electron')
+const { app, BrowserWindow, ipcMain } = require('electron')
 const path = require('path')
+const Database = require('./database.js');
 
 function createWindow () {
     // Create the browser window.
-    const win = new BrowserWindow({
+    const mainWindow = new BrowserWindow({
         width: 800,
         height: 600,
         frame: true,
         webPreferences: {
-            nodeIntegration: true
-        }
-    })
+            nodeIntegration: true,
+            preload: path.join(__dirname, 'preload.js'),
+        },
+    });
 
-    // win.removeMenu()
-    //win.loadFile(path.join(__dirname, '..', 'public', 'index.html'))
-    win.loadURL('http://localhost:3000')
+    // mainWindow.removeMenu()
+    mainWindow.loadURL('http://localhost:3000')
 }
 
-// This method will be called when Electron has finished
-// initialization and is ready to create browser windows.
-// Some APIs can only be used after this event occurs.
-app.whenReady().then(createWindow)
+// run once initialized
+app.whenReady().then(() => {
+    new Database(path.join(__dirname, '..', 'data', 'test-data.xlsx')).attachHandlers(ipcMain);
+
+    createWindow();
+
+    app.on('activate', () => {
+        if (BrowserWindow.getAllWindows().length === 0) createWindow()
+    });
+});
 
 // Quit when all windows are closed
-app.on('window-all-closed', app.quit)
-
-// In this file you can include the rest of your app's specific main process
-// code. You can also put them in separate files and require them here.
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') app.quit()
+});
