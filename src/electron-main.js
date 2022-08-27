@@ -1,7 +1,10 @@
 const { app, BrowserWindow, ipcMain } = require('electron')
 const path = require('path')
-const Database = require('./database.js');
+const Database = require('./server/database.js');
 
+/**
+ * Creates a new window and attaches it to the React process.
+ */
 function createWindow () {
     // Create the browser window.
     const mainWindow = new BrowserWindow({
@@ -10,7 +13,7 @@ function createWindow () {
         frame: true,
         webPreferences: {
             nodeIntegration: true,
-            preload: path.join(__dirname, 'preload.js'),
+            preload: path.join(__dirname, 'server', 'preload.js'),
         },
     });
 

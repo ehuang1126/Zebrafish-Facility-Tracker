@@ -1,8 +1,8 @@
 import React from 'react';
-import Header from './header.js';
-import Landing from './landing.js';
-import Tanks from './tanks.js';
-import Genes from './genes.js';
+import Header from '../header/header.js';
+import Landing from '../landing/landing.js';
+import TanksPage from '../tanks/tanksPage.js';
+import Genes from '../genes/genes.js';
 
 import './view.css';
 
@@ -10,6 +10,9 @@ const Pages = {LANDING: 100,
                TANKS: 101,
                GENES: 102};
 
+/**
+ * This class represents the entire window.
+ */
 class View extends React.Component {
     constructor(props) {
         super(props);
@@ -26,7 +29,7 @@ class View extends React.Component {
         if(this.state.page === Pages.LANDING) {
             page = <Landing />;
         } else if(this.state.page === Pages.TANKS) {
-            page = <Tanks />;
+            page = <TanksPage />;
         } else if(this.state.page === Pages.GENES) {
             page = <Genes />;
         } else {
@@ -35,7 +38,8 @@ class View extends React.Component {
 
         return (
             <div id="view">
-                <Header onPageChange={this.handlePageChange} />
+                <Header onPageChange={this.handlePageChange}
+                        currentPage={this.state.page} />
                 { page }
             </div>
         );

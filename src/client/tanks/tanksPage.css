@@ -1,0 +1,13 @@
+#tanks-page {
+    display: flex;
+    flex-direction: column;
+}
+
+#tab-row {
+    display: flex;
+}
+
+.tab {
+    width: 10vw;
+    flex-shrink: 1;
+}

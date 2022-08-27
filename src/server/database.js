@@ -1,30 +1,19 @@
 const xlsx = require('xlsx');
 
+const EMPTY_CELL_MESSAGE = '*This cell is empty.*';
+
 /**
  * This file exports a minimal database interface for use with the zebrafish
- * manager. The exposed functions are:
- *
- * constructor(String filename) => Database
- * readTank(Int row, Int col) => Tank
- * writeTank(Int row, Int col, Tank data) => Boolean?
- * readGene(Int id) => Gene
- * writeGene(Int id, Gene data) => Boolean?
+ * manager. The most important method here is `attachHandlers`, which takes an
+ * `ipcMain` and attaches handlers for reading and writing Tanks and Genes to
+ * and from the database.
  *
  * A Tank is an object with 'labels' and 'data' fields which are paired arrays
  * such that the i-th element in the 'labels' array is the label for the i-th
  * element in the 'data' array.
  */
-
-const getMethods = (obj) => {
-  let properties = new Set()
-  let currentObj = obj
-  do {
-    Object.getOwnPropertyNames(currentObj).map(item => properties.add(item))
-  } while ((currentObj = Object.getPrototypeOf(currentObj)))
-  return [...properties.keys()]
-}
-
 class Database {
+    // these are the maximum dimension according to the xlsx library
     static MAX_ROW = 1048575;
     static MAX_COL = 16383;
     #db;
@@ -54,20 +43,29 @@ class Database {
     }
 
     /**
-     * Reads a row and converts it to a Tank object.
+     * Reads a row from a sheet and converts it to a Tank object.
      *
-     * Assumes that the column headings are in the first row.
+     * Assumes that the column headings are in the first row and skips fields
+     * that are undefined for this row.
      *
      * sheet - an actual array(?) and not just a sheet name
      * rowNumber - the number of the row to get data from
      */
-    #rowToTank(sheet, rowNum) {
+    #sheetToTank(sheet, rowNum) {
         const labels = this.#getRow(sheet, 0);
-        const row = this.#getRow(sheet, rowNum);
+        const data = this.#getRow(sheet, rowNum);
+
+        const cleanedData = data.map((cell) => {
+            if(cell) {
+                return cell;
+            } else {
+                return EMPTY_CELL_MESSAGE;
+            }
+        });
 
         return {
             'labels': labels,
-            'data': row,
+            'data': cleanedData,
         };
     }
 
@@ -76,7 +74,9 @@ class Database {
      * fields populated from the database.
      */
     readTank(row, col) {
-        return this.#rowToTank(this.#db.Sheets[this.#db.SheetNames[0]], row);
+        const tankSheet = this.#db.Sheets['tank_data'];
+        const tank = this.#sheetToTank(tankSheet, row);
+        return tank;
     }
 
     /**
@@ -84,6 +84,7 @@ class Database {
      * fields.
      */
     writeTank(row, col, data) {
+        // TODO implement
         return `writeTank(${row}, ${col})`;
     }
 
@@ -92,6 +93,7 @@ class Database {
      * fields populated from the database.
      */
     readGene(id) {
+        // TODO implement
         return `readGene(${row}, ${col})`;
     }
 
@@ -100,6 +102,7 @@ class Database {
      * fields.
      */
     writeGene(id, data) {
+        // TODO implement
         return `writeGene(${row}, ${col})`;
     }
 
@@ -107,7 +110,10 @@ class Database {
      * Attaches the event handlers that send database data back to the renderer.
      */
     attachHandlers(ipcMain) {
-        ipcMain.handle('db:readTank', (event, ...args) => this.readTank(...args));
+        ipcMain.handle('db:readTank',  (event, ...args) => this.readTank(...args));
+        ipcMain.handle('db:writeTank', (event, ...args) => this.writeTank(...args));
+        ipcMain.handle('db:readGene',  (event, ...args) => this.readGene(...args));
+        ipcMain.handle('db:writeGene', (event, ...args) => this.writeGene(...args));
     }
 }
 
