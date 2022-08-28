@@ -1,13 +1,20 @@
 import React from 'react';
-import TankTab from './tankTab';
-import type {TankState} from './tankTab';
+import { Tabs, TabList, Tab, TabPanels, TabPanel } from '@chakra-ui/react';
+import TankViewer from './tankViewer';
+import Maps from './maps';
 
 import './tanksPage.css';
+
+interface TabState {
+    tankSelected: boolean,
+    row: number,
+    col: number,
+}
 
 interface Props {}
 
 interface State {
-    tabs: TankState[],
+    tabs: TabState[],
     currentTab: number,
 }
 
@@ -21,9 +28,25 @@ class TanksPage extends React.Component<Props, State> {
         super(props);
         this.state = {
             tabs: [],
-            currentTab: -1,
+            currentTab: 0,
         };
-        this.setTabState = this.setTabState.bind(this);
+    }
+
+    selectTank(tabNum: number): (row: number, col: number) => void {
+        return (row: number, col: number) => {
+            this.setState((state: Readonly<State>, props: Readonly<Props>): State => {
+                const tabs: TabState[] = Array.from(state.tabs);
+                tabs[tabNum] = {
+                    tankSelected: true,
+                    row: row,
+                    col: col,
+                };
+                return {
+                    tabs: tabs,
+                    currentTab: state.currentTab,
+                };
+            });
+        }
     }
 
     /**
@@ -38,21 +61,15 @@ class TanksPage extends React.Component<Props, State> {
     }
 
     /**
-     * archives the state from an unmounting tab
+     * Open a new tab and set it active.
      */
-    setTabState(tabIndex: number, tabState: TankState): void {
-        const newTabs = this.state.tabs;
-        newTabs[tabIndex] = tabState;
-        this.setState({tabs: newTabs});
-    }
-
     private newTab(): void {
         this.setState((state: State, props: Props): State => {
             const tabIndex: number = state.tabs.length;
-            const newTab: TankState = {
+            const newTab: TabState = {
                 tankSelected: false,
-                tankRow: -1,
-                tankCol: -1,
+                row: -1,
+                col: -1,
             };
             state.tabs.push(newTab);
             return {
@@ -62,37 +79,31 @@ class TanksPage extends React.Component<Props, State> {
         });
     }
 
-    selectTab(tabNum: number): void {
-        this.setState({currentTab: tabNum});
-    }
-
     render(): JSX.Element {
-        const tabRow: JSX.Element[] = [];
-        if(this.state.tabs.length > 0) {
-            for(let i in this.state.tabs) {
-                tabRow.push(
-                    <div key={i} onClick={(): void => this.selectTab(parseInt(i))} className='tab'>
-                        { `tab #${i}` }
-                    </div>
-                );
-            }
-
-            return (
-                <div id='tanks-page'>
-                    <div id='tab-row'>
-                        { tabRow }
-                    </div>
-                    <TankTab
-                        key={this.state.currentTab}
-                        tabIndex={this.state.currentTab}
-                        state={this.state.tabs[this.state.currentTab]}
-                        archiveState={this.setTabState}
-                    />
-                </div>
-            );
-        } else {
-            return <div />;
-        }
+        return (
+            <Tabs defaultIndex={this.state.currentTab}>
+                <TabList>
+                    {
+                        this.state.tabs.map((tabState: TabState, tabNum: number, tabs: TabState[]): JSX.Element =>
+                            <Tab key={tabNum}>tab #{tabNum}</Tab>
+                        )
+                    }
+                </TabList>
+                <TabPanels>
+                    {
+                        this.state.tabs.map((tabState: TabState, tabNum: number, tabs: TabState[]): JSX.Element => 
+                            <TabPanel key={tabNum}>
+                                {
+                                    tabState.tankSelected ?
+                                        <TankViewer row={tabState.row} col={tabState.col} /> :
+                                        <Maps row={tabState.row} col={tabState.col} selectTank={this.selectTank(tabNum)} />
+                                }
+                            </TabPanel>
+                        )
+                    }
+                </TabPanels>
+            </Tabs>
+        );
     }
 }
 

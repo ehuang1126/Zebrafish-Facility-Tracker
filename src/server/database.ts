@@ -44,7 +44,7 @@ class Database {
             var nextCell: xlsx.WorkSheet = sheet[
                 xlsx.utils.encode_cell({r: rowNum, c: colNum})
             ];
-            row.push(nextCell?.w);
+            row.push(nextCell?.w ?? EMPTY_CELL_MESSAGE);
         }
         return row;
     }
@@ -54,19 +54,14 @@ class Database {
      *
      * Assumes that the column headings are in the first row and skips fields
      * that are undefined for this row.
-     *
-     * sheet - an actual array(?) and not just a sheet name
-     * rowNumber - the number of the row to get data from
      */
     private sheetToTank(sheet: xlsx.WorkSheet, rowNum: number): Tank {
         const labels: Row = this.getRow(sheet, 0);
         const data: Row = this.getRow(sheet, rowNum);
 
-        const cleanedData: Row = data.map((cell: (string | number)) => cell ?? EMPTY_CELL_MESSAGE);
-
         return {
             'labels': labels,
-            'data': cleanedData,
+            'data': data,
         };
     }
 

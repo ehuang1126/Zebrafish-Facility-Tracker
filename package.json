@@ -1,10 +1,13 @@
 {
-  "name": "zebrafish-manager",
+  "name": "zebrafish-facility-tracker",
   "author": "kevin shin",
   "version": "0.1.0",
   "main": "dist/main.js",
   "private": true,
   "dependencies": {
+    "@chakra-ui/react": "^2.2.9",
+    "@emotion/react": "^11.10.0",
+    "@emotion/styled": "^11.10.0",
     "@testing-library/jest-dom": "^5.16.5",
     "@testing-library/react": "^13.3.0",
     "@testing-library/user-event": "^13.5.0",
@@ -12,8 +15,8 @@
     "@types/node": "^16.11.56",
     "@types/react": "^18.0.17",
     "@types/react-dom": "^18.0.6",
-    "antd": "^4.22.8",
     "electron": "^20.1.0",
+    "framer-motion": "^7.2.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-scripts": "5.0.1",
@@ -22,12 +25,15 @@
     "xlsx": "^0.18.5"
   },
   "scripts": {
+    "build": "rm -r dist/ && ./node_modules/.bin/tsc && cd src && find -name '*.css' -exec cp --parents {} ../dist/ \\; && cd ..",
     "react": "react-scripts start",
-    "electron": "electron dist",
-    "prestart": "BROWSER=none react-scripts start &",
-    "start": "sleep 3 && electron .",
+    "electron": "electron .",
     "kill": "fuser -k 3000/tcp",
-    "build": "./node_modules/.bin/tsc && cp -r src/* dist/",
+
+    "prestart": "npm run build && (BROWSER=none npm run react &)",
+    "start": "sleep 3 && npm run electron",
+    "poststart": "npm run kill",
+
     "test": "react-scripts test"
   },
   "eslintConfig": {

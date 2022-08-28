@@ -1,5 +1,8 @@
+import { Table, TableContainer, Tbody, Td, Tr, Text } from '@chakra-ui/react';
 import React from 'react';
 import type {Tank} from '../../server/database.js';
+
+type CellValue = (string | number);
 
 interface Props {
     row: number,
@@ -7,7 +10,7 @@ interface Props {
 }
 
 interface State {
-    tank?: Tank,
+    tank: Tank,
 }
 
 /**
@@ -15,11 +18,6 @@ interface State {
  * `props.row` and `props.col` to be the location Tank object it should show.
  */
 class TankViewer extends React.Component<Props, State> {
-    constructor(props: Props) {
-        super(props);
-        this.state = {tank: undefined};
-    }
-
     /**
      * Actually loads the Tank data from the database.
      */
@@ -36,56 +34,31 @@ class TankViewer extends React.Component<Props, State> {
      * Converts this tab's Tank object to JSX.
      */
     private generateJSX(): JSX.Element {
-        if(this.state.tank) {
-            const labels: JSX.Element[] = [];
-            const data: JSX.Element[] = [];
-            for(let i in this.state.tank.labels) {
-                labels.push( <div key={i}>{ this.state.tank.labels[i] }</div> );
-                data.push( <div key={i}>{ this.state.tank.data[i] }</div> );
-            }
-
-            // TODO replace all this
-            return (
-                <div style={ {
-                    'flexGrow': '4',
-                    'display': 'flex',
-                    'flexDirection': 'row',
-                } }>
-                    <div style={ {
-                        'flexGrow': '1',
-                        'display': 'flex',
-                        'flexDirection': 'column',
-                        'alignItems': 'flex-end',
-                        'gap': '0.3em',
-                    } }>
-                        <h3>labels</h3>
-                        { labels }
-                    </div>
-                    <div style={ {'width': '2ch'} }/>
-                    <div style={ {
-                        'flexGrow': '1',
-                        'display': 'flex',
-                        'flexDirection': 'column',
-                        'alignItems': 'flex-start',
-                        'gap': '0.3em',
-                    } }>
-                        <h3>data</h3>
-                        { data }
-                    </div>
-                </div>
-            );
-        } else {
-            return <div />;
-        }
+        console.log(this.state.tank);
+        return (
+            <TableContainer>
+                <Table>
+                    <Tbody>
+                        {
+                            this.state.tank.labels.map((label: CellValue, i: number, labels: CellValue[]): JSX.Element => (
+                                <Tr>
+                                    <Td> {label} </Td>
+                                    <Td> {this.state.tank.data[i]}</Td>
+                                </Tr>
+                            ))
+                        }
+                    </Tbody>
+                </Table>
+            </TableContainer>
+        );
     }
 
     render(): JSX.Element {
-        return (
-            <div style={ {'display': 'flex', 'flexDirection': 'row',} }>
-                <div style={ {'flexGrow': '6'} } />
-                { this.generateJSX() }
-            </div>
-        );
+        if(this.state?.tank) {
+            return this.generateJSX();
+        } else {
+            return <Text>loading</Text>;
+        }
     }
 }
 

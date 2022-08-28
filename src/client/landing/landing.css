@@ -7,11 +7,11 @@
 }
 
 #news-pane {
-    flex-grow: 7;
+    flex: 7;
     background-color: turquoise;
 }
 
 #warnings-pane {
-    flex-grow: 3;
+    flex: 3;
     background-color: coral;
 }
