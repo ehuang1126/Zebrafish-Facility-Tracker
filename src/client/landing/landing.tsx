@@ -1,10 +1,9 @@
 import React from 'react';
-import ReactDOM from 'react-dom';
 
 import './landing.css';
 
 class Landing extends React.Component {
-    render() {
+    render(): JSX.Element {
         return (
             <div id="page">
                 <div id="news-pane">

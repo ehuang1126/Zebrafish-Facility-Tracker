@@ -1,31 +1,39 @@
 import React from 'react';
-import Header from '../header/header.js';
-import Landing from '../landing/landing.js';
-import TanksPage from '../tanks/tanksPage.js';
-import Genes from '../genes/genes.js';
+import Header from '../header/header';
+import Landing from '../landing/landing';
+import TanksPage from '../tanks/tanksPage';
+import Genes from '../genes/genes';
 
 import './view.css';
 
-const Pages = {LANDING: 100,
-               TANKS: 101,
-               GENES: 102};
+enum Pages {
+    LANDING,
+    TANKS,
+    GENES,
+}
+
+interface Props {}
+
+interface State {
+    page: Pages,
+}
 
 /**
  * This class represents the entire window.
  */
-class View extends React.Component {
-    constructor(props) {
+class View extends React.Component<Props, State> {
+    constructor(props: Readonly<Props>) {
         super(props);
         this.state = {page: Pages.LANDING};
         this.handlePageChange = this.handlePageChange.bind(this);
     }
 
-    handlePageChange(newPage) {
+    handlePageChange(newPage: Pages): void {
         this.setState({page: newPage});
     }
 
-    render() {
-        let page;
+    render(): JSX.Element {
+        let page: React.ReactElement;
         if(this.state.page === Pages.LANDING) {
             page = <Landing />;
         } else if(this.state.page === Pages.TANKS) {

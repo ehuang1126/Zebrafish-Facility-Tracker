@@ -1,23 +1,34 @@
 import React from 'react';
-import ReactDOM from 'react-dom';
-import Maps from './maps.js';
-import TankViewer from './tankViewer.js';
+import Maps from './maps';
+import TankViewer from './tankViewer';
+
+interface Props {
+    state: State,
+    tabIndex: number,
+    archiveState: (tabIndex: number, tabState: State) => void,
+}
+
+interface State {
+    tankSelected: boolean,
+    tankRow: number,
+    tankCol: number,
+}
 
 /**
  * This class represents a single tab in the tank page.
  */
-class TankTab extends React.Component {
-    constructor(props) {
+class TankTab extends React.Component<Props, State> {
+    constructor(props: Readonly<Props>) {
         super(props);
         this.state = props.state;
         this.selectTank = this.selectTank.bind(this);
     }
 
-    componentWillUnmount() {
+    componentWillUnmount(): void {
         this.props.archiveState(this.props.tabIndex, this.state);
     }
 
-    selectTank(row, col) {
+    selectTank(row: number, col: number): void {
         this.setState({
             tankSelected: true,
             tankRow: row,
@@ -25,7 +36,7 @@ class TankTab extends React.Component {
         });
     }
 
-    render() {
+    render(): JSX.Element {
         if(!this.state.tankSelected) {
             return <Maps selectTank={this.selectTank}
                          row={this.state.tankRow}
@@ -38,3 +49,4 @@ class TankTab extends React.Component {
 }
 
 export default TankTab;
+export type {State as TankState}

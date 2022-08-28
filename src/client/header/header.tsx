@@ -1,17 +1,25 @@
 import React from 'react';
-import ReactDOM from 'react-dom';
-import { Pages } from '../view/view.js';
+import {Pages} from '../view/view';
 
 import "./header.css";
 
-class Header extends React.Component {
-    changePage(newPage) {
-        return () => {
+interface Props {
+    onPageChange: (newPage: Pages) => void,
+    currentPage: Pages,
+}
+
+interface State {
+
+}
+
+class Header extends React.Component<Props, State> {
+    changePage(newPage: number): () => void {
+        return (): void => {
             this.props.onPageChange(newPage);
         };
     }
 
-    render() {
+    render(): JSX.Element {
         return (
             <div id="header">
                 <div className="button"

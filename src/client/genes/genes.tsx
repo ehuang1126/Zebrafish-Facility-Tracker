@@ -1,6 +1,6 @@
 import React from 'react';
-import ReactDOM from 'react-dom';
 
+// TODO nuke this file
 class Genes extends React.Component {
     render() {
         return (
