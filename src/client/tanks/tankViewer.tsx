@@ -29,9 +29,11 @@ class TankViewer extends React.Component<Props, State> {
 
     /**
      * a test to check if a cell's value is actually empty
+     * 
+     * Excludes undefined, empty string, and 'nan'
      */
     private cellValueNotEmpty(value: CellValue): boolean {
-        return value !== undefined && (typeof value === 'number' || value.trim().length > 0);
+        return value !== undefined && (typeof value === 'number' || (value !== 'nan' && value.trim().length > 0));
     }
 
     /**

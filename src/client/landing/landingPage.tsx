@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Button, Flex, Link, Text } from '@chakra-ui/react';
+import { Box, Flex, Link, Text } from '@chakra-ui/react';
 import type { Location } from '../../server/database'
 
 import './landingPage.css';
@@ -9,7 +9,6 @@ type Props = {
 };
 
 type State = {};
-
 
 class LandingPage extends React.Component<Props, State> {
     /**
@@ -48,7 +47,7 @@ class LandingPage extends React.Component<Props, State> {
             <Flex flexDirection='row'>
                 <Box id='news-pane'>
                     <Text>This is where the news goes.</Text>
-                    { this.embedJumps({ row: 5, col: 2, }) }
+                    <Text>jump to { this.embedJumps({ row: 5, col: 2, }) }</Text>
                 </Box>
                 <Box id='warnings-pane'>
                     <Text>This is where the warnings go.</Text>

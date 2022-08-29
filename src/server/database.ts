@@ -52,7 +52,7 @@ class Database {
         let row: Row = [];
         for(let colNum: number = 0; colNum < width; colNum++) {
             var nextCell: xlsx.WorkSheet = sheet[
-                xlsx.utils.encode_cell({r: rowNum, c: colNum})
+                xlsx.utils.encode_cell({ r: rowNum, c: colNum, })
             ];
             row.push(nextCell?.w);
         }
@@ -100,7 +100,7 @@ class Database {
      */
     writeTank(loc: Location, tank:Tank): void {
         // TODO implement
-        console.log(`writeTank(${loc.row}, ${loc.col})`);
+        console.log(`writeTank(${ loc.row }, ${ loc.col })`);
     }
 
     /**
@@ -109,7 +109,7 @@ class Database {
      */
     readGene(id: string): Gene {
         // TODO implement
-        return `readGene(${id})`;
+        return `readGene(${ id })`;
     }
 
     /**
@@ -118,7 +118,7 @@ class Database {
      */
     writeGene(id: string, gene: Gene): void {
         // TODO implement
-        console.log(`writeGene(${id})`);
+        console.log(`writeGene(${ id })`);
     }
 
     /**

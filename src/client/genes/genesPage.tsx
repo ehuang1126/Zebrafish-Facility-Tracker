@@ -2,7 +2,7 @@ import React from 'react';
 
 // TODO nuke this file
 class GenesPage extends React.Component {
-    render() {
+    override render() {
         return (
             <div>
                 Genes page

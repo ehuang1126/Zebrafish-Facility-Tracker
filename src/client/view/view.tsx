@@ -60,7 +60,7 @@ class View extends React.Component<Props, State> {
 
                 <TabPanels>
                     <TabPanel key='front'>
-                        <LandingPage jumpTank={this.state?.jumpTank}/>
+                        <LandingPage jumpTank={ this.state?.jumpTank }/>
                     </TabPanel>
                     <TabPanel key='tanks'>
                         <TanksPage registerJumpHandler={ this.registerJumpTankHandler.bind(this) } />
