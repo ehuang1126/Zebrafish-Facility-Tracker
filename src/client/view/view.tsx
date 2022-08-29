@@ -1,5 +1,5 @@
 import React from 'react';
-import {Tabs, TabList, TabPanels, Tab, TabPanel} from '@chakra-ui/react';
+import { Tabs, TabList, TabPanels, Tab, TabPanel } from '@chakra-ui/react';
 import Landing from '../landing/landing';
 import TanksPage from '../tanks/tanksPage';
 import Genes from '../genes/genes';

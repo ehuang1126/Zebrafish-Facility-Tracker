@@ -1,5 +1,5 @@
-import {contextBridge, ipcRenderer} from 'electron';
-import type {Tank, Gene} from './database.js';
+import { contextBridge, ipcRenderer } from 'electron';
+import type { Tank, Gene } from './database.js';
 
 interface ElectronAPI {
     readTank: (row: number, col: number) => Promise<Tank>,

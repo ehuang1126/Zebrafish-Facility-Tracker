@@ -1,6 +1,6 @@
-import { Table, TableContainer, Tbody, Td, Tr, Text } from '@chakra-ui/react';
 import React from 'react';
-import type {Tank} from '../../server/database.js';
+import { Table, TableContainer, Tbody, Td, Tr, Text } from '@chakra-ui/react';
+import type { Tank } from '../../server/database.js';
 
 type CellValue = (string | number);
 
@@ -34,14 +34,13 @@ class TankViewer extends React.Component<Props, State> {
      * Converts this tab's Tank object to JSX.
      */
     private generateJSX(): JSX.Element {
-        console.log(this.state.tank);
         return (
-            <TableContainer>
-                <Table>
+            <TableContainer id='tank-table'>
+                <Table variant='striped'>
                     <Tbody>
                         {
                             this.state.tank.labels.map((label: CellValue, i: number, labels: CellValue[]): JSX.Element => (
-                                <Tr>
+                                <Tr key={i}>
                                     <Td> {label} </Td>
                                     <Td> {this.state.tank.data[i]}</Td>
                                 </Tr>

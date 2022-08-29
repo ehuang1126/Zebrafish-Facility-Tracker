@@ -1,4 +1,4 @@
-import {app, BrowserWindow, ipcMain} from 'electron';
+import { app, BrowserWindow, ipcMain } from 'electron';
 import path from 'path';
 import Database from './server/database.js';
 
