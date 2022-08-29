@@ -1,18 +1,28 @@
 import xlsx from 'xlsx';
 
-const EMPTY_CELL_MESSAGE: string = '*This cell is empty.*';
-// these are the maximum dimension according to the xlsx library
+const TANK_SHEET_NAME = 'tank_data';
+// these are the maximum dimensions according to the xlsx library
 // const MAX_ROW: number = 1048575;
 // const MAX_COL: number = 16383;
 
-interface Tank {
-    labels: Row;
-    data: Row;
-}
+type CellValue = (string | number);
 
-type Row = (string | number)[];
+type Field = {
+    label: CellValue,
+    data: CellValue,
+};
+
+// A tank is an ordered array of label:data pairs.
+type Tank = Field[];
+
+type Row = CellValue[];
 
 type Gene = any; // TODO implement
+
+type Location = {
+    row: number,
+    col: number,
+};
 
 /**
  * This file exports a minimal database interface for use with the zebrafish
@@ -44,34 +54,43 @@ class Database {
             var nextCell: xlsx.WorkSheet = sheet[
                 xlsx.utils.encode_cell({r: rowNum, c: colNum})
             ];
-            row.push(nextCell?.w ?? EMPTY_CELL_MESSAGE);
+            row.push(nextCell?.w);
         }
         return row;
     }
 
     /**
-     * Reads a row from a sheet and converts it to a Tank object.
+     * Converts a row of labels and a row of data to a Tank object.
      *
      * Assumes that the column headings are in the first row and skips fields
      * that are undefined for this row.
      */
-    private sheetToTank(sheet: xlsx.WorkSheet, rowNum: number): Tank {
-        const labels: Row = this.getRow(sheet, 0);
-        const data: Row = this.getRow(sheet, rowNum);
+    private sheetToTank(labels: Row, data: Row): Tank {
+        return labels.map((value: CellValue, i: number, labels: Row): Field => {
+            return {
+                label: value,
+                data: data[i],
+            };
+        });
+    }
 
-        return {
-            'labels': labels,
-            'data': data,
-        };
+    private findLocation(loc: Location): [xlsx.WorkSheet, number] {
+        const sheet: xlsx.WorkSheet = this.db.Sheets[TANK_SHEET_NAME];
+        const row = loc.row;
+        return [sheet, row];
     }
 
     /**
      * Returns a Tank object representing the tank in the given position with
      * fields populated from the database.
      */
-    readTank(row: number, col: number): Tank {
-        const tankSheet: xlsx.WorkSheet = this.db.Sheets['tank_data'];
-        const tank: Tank = this.sheetToTank(tankSheet, row);
+    readTank(loc: Location): Tank {
+        const [sheet, row] = this.findLocation(loc);
+
+        const labels: Row = this.getRow(sheet, 0);
+        const data: Row = this.getRow(sheet, row);
+
+        const tank: Tank = this.sheetToTank(labels, data);
         return tank;
     }
 
@@ -79,9 +98,9 @@ class Database {
      * Writes a Tank object to the database, reading data from the object's
      * fields.
      */
-    writeTank(row: number, col: number, tank:Tank): void {
+    writeTank(loc: Location, tank:Tank): void {
         // TODO implement
-        console.log(`writeTank(${row}, ${col})`);
+        console.log(`writeTank(${loc.row}, ${loc.col})`);
     }
 
     /**
@@ -106,8 +125,8 @@ class Database {
      * Attaches the event handlers that send database data back to the renderer.
      */
     attachHandlers(ipcMain: Electron.IpcMain) {
-        ipcMain.handle('db:readTank',  (event, row: number, col: number) => this.readTank(row, col));
-        ipcMain.handle('db:writeTank', (event, row: number, col: number, tank: Tank) => this.writeTank(row, col, tank));
+        ipcMain.handle('db:readTank',  (event, loc: Location) => this.readTank(loc));
+        ipcMain.handle('db:writeTank', (event, loc: Location, tank: Tank) => this.writeTank(loc, tank));
         ipcMain.handle('db:readGene',  (event, id: string) => this.readGene(id));
         ipcMain.handle('db:writeGene', (event, id: string, gene: Gene) => this.writeGene(id, gene));
     }
@@ -115,6 +134,9 @@ class Database {
 
 export default Database;
 export type {
+    CellValue,
+    Field,
     Tank,
     Gene,
+    Location,
 };

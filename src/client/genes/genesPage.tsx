@@ -1,7 +1,7 @@
 import React from 'react';
 
 // TODO nuke this file
-class Genes extends React.Component {
+class GenesPage extends React.Component {
     render() {
         return (
             <div>
@@ -11,4 +11,4 @@ class Genes extends React.Component {
     }
 }
 
-export default Genes;
+export default GenesPage;

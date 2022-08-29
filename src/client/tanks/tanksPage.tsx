@@ -1,22 +1,24 @@
 import React from 'react';
-import { Tabs, TabList, Tab, TabPanels, TabPanel, Button, Flex } from '@chakra-ui/react';
+import { Tabs, TabList, Tab, TabPanels, TabPanel, Button, Flex, CloseButton } from '@chakra-ui/react';
 import TankViewer from './tankViewer';
 import Maps from './maps';
+import type { Location } from '../../server/database';
 
 import './tanksPage.css';
 
-interface TabState {
+type TabState = {
     tankSelected: boolean,
-    row: number,
-    col: number,
-}
+    loc: Location,
+};
 
-interface Props {}
+type Props = {
+    registerJumpHandler: (handler: (loc: Location) => void) => void ,
+};
 
-interface State {
+type State = {
     tabs: TabState[],
     currentTab: number,
-}
+};
 
 /**
  * This class is responsible for everything about tanks. The page has some
@@ -30,23 +32,7 @@ class TanksPage extends React.Component<Props, State> {
             tabs: [],
             currentTab: 0,
         };
-    }
-
-    selectTank(tabNum: number): (row: number, col: number) => void {
-        return (row: number, col: number) => {
-            this.setState((state: Readonly<State>, props: Readonly<Props>): State => {
-                const tabs: TabState[] = Array.from(state.tabs);
-                tabs[tabNum] = {
-                    tankSelected: true,
-                    row: row,
-                    col: col,
-                };
-                return {
-                    tabs: tabs,
-                    currentTab: state.currentTab,
-                };
-            });
-        }
+        props.registerJumpHandler(this.jumpToTank.bind(this));
     }
 
     /**
@@ -55,20 +41,34 @@ class TanksPage extends React.Component<Props, State> {
     componentDidMount = this.newTab;
 
     /**
+     * Opens a new tab set to a certain tank.
+     */
+    jumpToTank(loc: Location): void {
+        this.setState((state: Readonly<State>, props: Readonly<Props>): Readonly<State> => {
+            const newTabState: Readonly<State> = this._newTab(state, props);
+            return this._selectTank(newTabState.currentTab, loc)(newTabState, props);
+        });
+    }
+
+    /**
      * Open a new tab and set it active. Separate into two functions so it can
      * be called in `closeTab` without breaking the state.
      */
     private newTab(): void { this.setState(this._newTab); }
-    private _newTab(state: State, props: Props): State {
+    private _newTab(state: Readonly<State>, props: Readonly<Props>): Readonly<State> {
         const tabIndex: number = state.tabs.length;
         const newTab: TabState = {
             tankSelected: false,
-            row: -1,
-            col: -1,
+            loc: {
+                row: -1,
+                col: -1,
+            },
         };
-        state.tabs.push(newTab);
+
+        const newTabs: TabState[] = Array.from(state.tabs);
+        newTabs.push(newTab);
         return {
-            tabs: state.tabs,
+            tabs: newTabs,
             currentTab: tabIndex,
         };
     }
@@ -80,13 +80,13 @@ class TanksPage extends React.Component<Props, State> {
      * tab, then open a new tab.
      */
     private closeTab(tabNum: number): void {
-        this.setState((state: State, props: Props): State => {
+        this.setState((state: Readonly<State>, props: Readonly<Props>): Readonly<State> => {
             const newTabs: TabState[] = Array.from(state.tabs);
             newTabs.splice(tabNum, 1);
             
             const newTabNum: number = (state.currentTab <= tabNum && tabNum < newTabs.length) ?
                     state.currentTab : state.currentTab - 1;
-            const newState: State = {
+            const newState: Readonly<State> = {
                 tabs: newTabs,
                 currentTab: newTabNum,
             };
@@ -100,7 +100,7 @@ class TanksPage extends React.Component<Props, State> {
      * elements.
      */
     private selectTab(tabNum: number): void {
-        this.setState((state: State, props: Props): State => {
+        this.setState((state: Readonly<State>, props: Readonly<Props>): Readonly<State> => {
             return {
                 tabs: state.tabs,
                 currentTab: tabNum,
@@ -108,36 +108,55 @@ class TanksPage extends React.Component<Props, State> {
         });
     }
 
+    /**
+     * A closure that selects a tank for a given tab. Split into two for use in the jump methods.
+     */
+    selectTank(tabNum: number): (loc: Location) => void {
+        return (loc: Location) => {
+            this.setState(this._selectTank(tabNum, loc));
+        }
+    }
+    private _selectTank(tabNum: number, loc: Location): (state: Readonly<State>, props: Readonly<Props>) => Readonly<State> {
+        return (state: Readonly<State>, props: Readonly<Props>): Readonly<State> => {
+            const tabs: TabState[] = Array.from(state.tabs);
+            tabs[tabNum] = {
+                tankSelected: true,
+                loc: loc,
+            };
+            return {
+                tabs: tabs,
+                currentTab: state.currentTab,
+            };
+        };
+    }
+
     override render(): JSX.Element {
         return (
-            <Tabs index={this.state.currentTab} onChange={this.selectTab.bind(this)}>
-                <Flex>
-                    <TabList flexGrow='1'>
-                        {
-                            this.state.tabs.map((tabState: TabState, tabNum: number, tabs: TabState[]): JSX.Element =>
-                                <Tab key={tabNum}>
-                                    {
-                                        tabState.tankSelected ? `(${tabState.row},${tabState.col})` : 'new tab'
-                                    }
-                                    <Button onClick={ () => {this.closeTab(tabNum)} } size='xs' marginLeft='1ch'>X</Button>
-                                </Tab>
-                            )
-                        }
+            <Tabs size='sm'
+                    index={ this.state.currentTab } onChange={ this.selectTab.bind(this) }>
+                <Flex maxWidth='100vw'>
+                    <TabList id='tank-tab-row'>
+                        { this.state.tabs.map((tabState: TabState, tabNum: number, tabs: TabState[]): JSX.Element =>
+                            <Tab className='tank-tab' key={tabNum}>
+                                <Flex>
+                                    { tabState.tankSelected ? `(${ tabState.loc.row },${ tabState.loc.col })` : 'new tab' }
+                                    <CloseButton className='tank-tab-close' size='sm'
+                                            onClick={ () => { this.closeTab(tabNum) } } />
+                                </Flex>
+                            </Tab>
+                        ) }
                     </TabList>
-                    <Button onClick={this.newTab.bind(this)}>+</Button>
+                    <Button onClick={ this.newTab.bind(this) }>+</Button>
                 </Flex>
                 <TabPanels>
-                    {
-                        this.state.tabs.map((tabState: TabState, tabNum: number, tabs: TabState[]): JSX.Element => 
-                            <TabPanel key={tabNum}>
-                                {
-                                    tabState.tankSelected ?
-                                        <TankViewer row={tabState.row} col={tabState.col} /> :
-                                        <Maps row={tabState.row} col={tabState.col} selectTank={this.selectTank(tabNum)} />
-                                }
-                            </TabPanel>
-                        )
-                    }
+                    { this.state.tabs.map((tabState: TabState, tabNum: number, tabs: TabState[]): JSX.Element =>
+                        <TabPanel key={ tabNum }>
+                            { tabState.tankSelected ?
+                                    <TankViewer loc={ tabState.loc } /> :
+                                    <Maps selectTank={ this.selectTank(tabNum) } />
+                            }
+                        </TabPanel>
+                    ) }
                 </TabPanels>
             </Tabs>
         );

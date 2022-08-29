@@ -1,17 +1,14 @@
 import React from 'react';
 import { Table, TableContainer, Tbody, Td, Tr, Text } from '@chakra-ui/react';
-import type { Tank } from '../../server/database.js';
+import type { CellValue, Field, Tank, Location } from '../../server/database.js';
 
-type CellValue = (string | number);
+type Props = {
+    loc: Location,
+};
 
-interface Props {
-    row: number,
-    col: number,
-}
-
-interface State {
+type State = {
     tank: Tank,
-}
+};
 
 /**
  * This class represents the visualizer for a single Tank's data. It expects
@@ -23,11 +20,18 @@ class TankViewer extends React.Component<Props, State> {
      */
     componentDidMount() {
         (async () => {
-            const tank: Tank = await window.electronAPI.readTank(this.props.row, this.props.col);
+            const tank: Tank = await window.electronAPI.readTank(this.props.loc);
             this.setState({
                 tank: tank,
             });
         })();
+    }
+
+    /**
+     * a test to check if a cell's value is actually empty
+     */
+    private cellValueNotEmpty(value: CellValue): boolean {
+        return value !== undefined && (typeof value === 'number' || value.trim().length > 0);
     }
 
     /**
@@ -37,22 +41,25 @@ class TankViewer extends React.Component<Props, State> {
         return (
             <TableContainer id='tank-table'>
                 <Table variant='striped'>
-                    <Tbody>
-                        {
-                            this.state.tank.labels.map((label: CellValue, i: number, labels: CellValue[]): JSX.Element => (
-                                <Tr key={i}>
-                                    <Td> {label} </Td>
-                                    <Td> {this.state.tank.data[i]}</Td>
+                    <Tbody> {
+                        this.state.tank.filter((field: Field, i: number, tank: Tank): boolean => 
+                            (this.cellValueNotEmpty(field.label) && this.cellValueNotEmpty(field.data))
+                        ).map((field: Field, i: number, tank: Tank): JSX.Element => {
+                            return (
+                                <Tr key={ i }>
+                                    <Td>{ field.label }</Td>
+                                    <Td>{ field.data }</Td>
                                 </Tr>
-                            ))
-                        }
+                            );
+                        })
+                    }
                     </Tbody>
                 </Table>
             </TableContainer>
         );
     }
 
-    render(): JSX.Element {
+    override render(): JSX.Element {
         if(this.state?.tank) {
             return this.generateJSX();
         } else {

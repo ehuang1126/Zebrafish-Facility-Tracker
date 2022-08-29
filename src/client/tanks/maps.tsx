@@ -1,42 +1,32 @@
 import React from 'react';
-import { Button, ButtonGroup } from '@chakra-ui/react';
+import { Button, Stack } from '@chakra-ui/react';
+import type { Location } from '../../server/database';
 
-interface Props {
-    row: number,
-    col: number,
-    selectTank: (row: number, col: number) => void,
-}
+type Props = {
+    selectTank: (loc: Location) => void,
+};
 
-interface State {
-    tankRow: number,
-    tankCol: number,
-}
+type State = {};
 
 class Maps extends React.Component<Props, State> {
-    constructor(props: Props) {
-        super(props);
-        this.state = {
-            tankRow: this.props.row,
-            tankCol: this.props.col,
-        };
+    private getTankLocations(): Location[] {
+        return [
+            { row: 1, col: 2, },
+            { row: 2, col: 2, },
+            { row: 3, col: 2, },
+            { row: 4, col: 2, },
+        ];
     }
 
-    render() {
+    override render() {
         return (
-            <ButtonGroup>
-                <Button onClick={(): void => this.props.selectTank(1, 2)}>
-                    <h2>tank #1</h2>
-                </Button>
-                <Button onClick={(): void => this.props.selectTank(2, 2)}>
-                    <h2>tank #2</h2>
-                </Button>
-                <Button onClick={(): void => this.props.selectTank(3, 2)}>
-                    <h2>tank #3</h2>
-                </Button>
-                <Button onClick={(): void => this.props.selectTank(4, 2)}>
-                    <h2>tank #4</h2>
-                </Button>
-            </ButtonGroup>
+            <Stack>
+                { this.getTankLocations().map((loc: Location, i: number, locs: Location[]): JSX.Element => (
+                    <Button onClick={ (): void => this.props.selectTank(loc) } key={ i }>
+                        <h2>tank ({ `${ loc.row },${ loc.col }` })</h2>
+                    </Button>
+                )) }
+            </Stack>
         );
     }
 }

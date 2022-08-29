@@ -1,0 +1,20 @@
+#tank-tab-row {
+    flex-grow: 1;
+    display: flex;
+    overflow-x: auto;
+    overflow-y: hidden;
+}
+
+.tank-tab {
+    max-width: 20ch;
+    flex: 1;
+}
+
+.tank-tab > * {
+    flex-grow: 1;
+    justify-content: space-between;
+}
+
+.tank-tab-close {
+    float: right;
+}

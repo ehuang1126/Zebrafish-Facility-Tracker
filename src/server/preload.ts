@@ -1,16 +1,16 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import type { Tank, Gene } from './database.js';
+import type { Tank, Gene, Location } from './database.js';
 
 interface ElectronAPI {
-    readTank: (row: number, col: number) => Promise<Tank>,
-    writeTank: (row: number, col: number, tank: Tank) => void,
+    readTank: (loc: Location) => Promise<Tank>,
+    writeTank: (loc: Location, tank: Tank) => void,
     readGene: (id: string) => Gene,
     writeGene: (id: string, gene: Gene) => void,
 }
 
 const exposedAPI: ElectronAPI = {
-    readTank: (row: number, col: number)  => ipcRenderer.invoke('db:readTank', row, col),
-    writeTank: (row: number, col: number, tank: Tank) => ipcRenderer.invoke('db:writeTank', row, col, tank),
+    readTank: (loc: Location)  => ipcRenderer.invoke('db:readTank', loc),
+    writeTank: (loc: Location, tank: Tank) => ipcRenderer.invoke('db:writeTank', loc, tank),
     readGene: (id: string)  => ipcRenderer.invoke('db:readGene', id),
     writeGene: (id: string, gene: Gene) => ipcRenderer.invoke('db:writeGene', id, gene),
 }
