@@ -126,6 +126,10 @@ class Database {
         return tank;
     }
 
+    getRacks(): Rack[] {
+        return this.racks;
+    }
+
     /**
      * Attaches the event handlers that send database data back to the renderer.
      */
@@ -135,6 +139,7 @@ class Database {
         ipcMain.handle('db:readGene',  (event, id: string): (Gene | undefined) => this.readGene(id));
         ipcMain.handle('db:writeGene', (event, id: string, gene: Gene): void => this.writeGene(id, gene));
         ipcMain.handle('db:findTank',  (event, loc: Location): (Tank | undefined) => this.findTank(loc));
+        ipcMain.handle('db:getRacks', (event): Rack[] => this.getRacks());
     }
 
     /**
@@ -242,4 +247,5 @@ export type {
     Tank,
     Gene,
     Location,
+    Rack,
 };

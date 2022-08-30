@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import type { Tank, Gene, Location } from './database.js';
+import type { Tank, Gene, Location, Rack } from './database.js';
 
 type ElectronAPI = {
     readTank: (uid: number) => Promise<Tank | undefined>,
@@ -7,6 +7,7 @@ type ElectronAPI = {
     readGene: (id: string) => Promise<Gene | undefined>,
     writeGene: (id: string, gene: Gene) => void,
     findTank: (loc: Location) => Promise<Tank | undefined>,
+    getRacks: () => Promise<Rack[]>,
 };
 
 const exposedAPI: ElectronAPI = {
@@ -15,6 +16,7 @@ const exposedAPI: ElectronAPI = {
     readGene: (id: string): Promise<Gene | undefined> => ipcRenderer.invoke('db:readGene', id),
     writeGene: (id: string, gene: Gene): void => { ipcRenderer.invoke('db:writeGene', id, gene) },
     findTank: (loc: Location): Promise<Tank | undefined> => ipcRenderer.invoke('db:findTank', loc),
+    getRacks: (): Promise<Rack[]> => ipcRenderer.invoke('db:getRacks'),
 }
 
 contextBridge.exposeInMainWorld('electronAPI', exposedAPI);

@@ -36,9 +36,8 @@ class TankViewer extends React.Component<Props, State> {
      */
     override componentDidMount() {
         (async () => {
-            const tank: (Tank | undefined) = await window.electronAPI.readTank(this.props.uid);
             this.setState({
-                tank: tank,
+                tank: await window.electronAPI.readTank(this.props.uid),
             });
         })();
     }
@@ -93,7 +92,6 @@ class TankViewer extends React.Component<Props, State> {
      * the database when toggling back from edit.
      */
     private toggleEdit(): void {
-        console.log(this.state.tank);
         if(this.state.isEditing && this.state.tank !== undefined) {
             window.electronAPI.writeTank(this.props.uid, this.state.tank);
         }
@@ -138,7 +136,7 @@ class TankViewer extends React.Component<Props, State> {
     }
 
     override render(): JSX.Element {
-        if(this.state?.tank) {
+        if(this.state?.tank !== undefined) {
             return this.generateJSX();
         } else {
             return <Text>loading</Text>;
