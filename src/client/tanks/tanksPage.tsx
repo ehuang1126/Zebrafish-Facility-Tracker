@@ -60,7 +60,8 @@ class TanksPage extends React.Component<Props, State> {
         const newTab: TabState = {
             tankSelected: false,
             loc: {
-                row: -1,
+                rack: -1,
+                row: '!',
                 col: -1,
             },
         };
@@ -137,9 +138,9 @@ class TanksPage extends React.Component<Props, State> {
                 <Flex maxWidth='100vw'>
                     <TabList id='tank-tab-row'>
                         { this.state.tabs.map((tabState: TabState, tabNum: number, tabs: TabState[]): JSX.Element =>
-                            <Tab className='tank-tab' key={tabNum}>
+                            <Tab className='tank-tab' key={ tabNum }>
                                 <Flex>
-                                    { tabState.tankSelected ? `(${ tabState.loc.row },${ tabState.loc.col })` : 'new tab' }
+                                    { tabState.tankSelected ? `tank ${ tabState.loc.row }${ tabState.loc.col }` : 'new tab' }
                                     <CloseButton className='tank-tab-close' size='sm'
                                             onClick={ () => { this.closeTab(tabNum) } } />
                                 </Flex>
@@ -152,7 +153,7 @@ class TanksPage extends React.Component<Props, State> {
                     { this.state.tabs.map((tabState: TabState, tabNum: number, tabs: TabState[]): JSX.Element =>
                         <TabPanel key={ tabNum }>
                             { tabState.tankSelected ?
-                                    <TankViewer loc={ tabState.loc } /> :
+                                    <TankViewer loc={ tabState.loc } isEditing={ true } /> :
                                     <Maps selectTank={ this.selectTank(tabNum) } />
                             }
                         </TabPanel>

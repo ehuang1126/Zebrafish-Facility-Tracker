@@ -47,7 +47,7 @@ class LandingPage extends React.Component<Props, State> {
             <Flex flexDirection='row'>
                 <Box id='news-pane'>
                     <Text>This is where the news goes.</Text>
-                    <Text>jump to { this.embedJumps({ row: 5, col: 2, }) }</Text>
+                    <Text>jump to { this.embedJumps({ rack: 1, row: 'A', col: 3, }) }</Text>
                 </Box>
                 <Box id='warnings-pane'>
                     <Text>This is where the warnings go.</Text>

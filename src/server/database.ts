@@ -1,6 +1,9 @@
 import xlsx from 'xlsx';
 
-const TANK_SHEET_NAME = 'tank_data';
+const RACK_NAME_PREFIX = 'rack#';
+const ROW_LABEL = 'row';
+const COL_LABEL = 'col';
+const GENE_ID_LABEL = 'gene ID';
 // these are the maximum dimensions according to the xlsx library
 // const MAX_ROW: number = 1048575;
 // const MAX_COL: number = 16383;
@@ -13,14 +16,29 @@ type Field = {
 };
 
 // A tank is an ordered array of label:data pairs.
-type Tank = Field[];
+type Tank = {
+    loc: Location,
+    gene: Gene,
+    fields: Field[],
+};
+
+type Rack = {
+    rackNum: number,
+    size: {
+        width: number,
+        height: number,
+    },
+    tanks: Tank[],
+};
 
 type Row = CellValue[];
 
 type Gene = any; // TODO implement
 
 type Location = {
-    row: number,
+    rack: number,
+    row: string,
+    // col is 1-indexed
     col: number,
 };
 
@@ -35,49 +53,112 @@ type Location = {
  * element in the 'data' array.
  */
 class Database {
-    private db;
+    private racks: Rack[];
 
     constructor(filename: string) {
-        this.db = xlsx.readFile(filename);
+        const db: xlsx.WorkBook = xlsx.readFile(filename);
+
+        this.racks = [];
+        db.SheetNames.filter((name: string, i: number, names: string[]): boolean => (
+            name.startsWith(RACK_NAME_PREFIX)
+        )).map((name: string, i: number, rackSheets: string[]): void => {
+            const rackNum: number = Number(name.substring(RACK_NAME_PREFIX.length));
+            this.racks[rackNum] = Database.sheetToRack(db, rackNum);
+        })
     }
 
     /**
-     * Returns a single row from the sheet as an array. Assumes the sheet
-     * starts at A1.
+     * reads a sheet from the database and converts it to a rack
      */
-    private getRow(sheet: xlsx.WorkSheet, rowNum: number): Row {
+    private static sheetToRack(db: xlsx.WorkBook, rackNum: number): Rack {
+        const rackName: string = RACK_NAME_PREFIX + rackNum;
+        const sheet: xlsx.WorkSheet = db.Sheets[rackName];
+        const rowsOfData: number = sheet['!ref'] !== undefined ?
+                xlsx.utils.decode_range(sheet['!ref']).e.r :
+                0;
+        const rack: Rack = {
+            rackNum: rackNum,
+            size: Database.getRackShape(db, rackName),
+            tanks: [],
+        };
+
+        // populate the rack from the sheet
+        for(let rowNum = 1; rowNum < 1 + rowsOfData; rowNum++) {
+            const tank: Tank = Database.rowToTank(sheet, rowNum);
+            const locationHash = Database.hashLocation(rack.size.width, tank.loc);
+            if(locationHash >= 0) { // TODO change to include if any data is present
+                rack.tanks[locationHash] = tank;
+            }
+        }
+
+        return rack;
+    }
+
+    /**
+     * returns the number of rows and columns of a specific rack
+     */
+    private static getRackShape(db: xlsx.WorkBook, rackName: string): { width: number, height: number, } {
+        // TODO implement
+        return {
+            width: 12,
+            height: 2,
+        }
+    }
+
+    /**
+     * converts a row from a sheet into a Tank
+     */
+    private static rowToTank(sheet: xlsx.WorkSheet, rowNum: number): Tank {
         const width: number = sheet['!ref'] !== undefined ? 
                 xlsx.utils.decode_range(sheet['!ref']).e.c + 1 :
                 0;
-        let row: Row = [];
+        const tank: Tank = {
+            loc: {
+                rack: -1,
+                row: '!',
+                col: -1,
+            },
+            gene: '!',
+            fields: [],
+        };
+
+        // populate the tank from the row of data
         for(let colNum: number = 0; colNum < width; colNum++) {
-            var nextCell: xlsx.WorkSheet = sheet[
-                xlsx.utils.encode_cell({ r: rowNum, c: colNum, })
-            ];
-            row.push(nextCell?.w);
+            const label: CellValue = sheet[ xlsx.utils.encode_cell({ r: 0, c: colNum, }) ]?.w;
+            const data: CellValue = sheet[ xlsx.utils.encode_cell({ r: rowNum, c: colNum, }) ]?.w;
+
+            if(label === ROW_LABEL && data !== undefined) {
+                tank.loc.row = data as string;
+            } else if(label === COL_LABEL && data !== undefined) {
+                tank.loc.col = Number(data);
+            } else if(label === GENE_ID_LABEL) {
+                tank.gene = data as string;
+            } else {
+                tank.fields.push({
+                    label: label,
+                    data: data,
+                });
+            }
         }
-        return row;
+
+        return tank;
     }
 
     /**
-     * Converts a row of labels and a row of data to a Tank object.
-     *
-     * Assumes that the column headings are in the first row and skips fields
-     * that are undefined for this row.
+     * numbers each tank in a rack such that the first tank in the first row
+     * gets 0, the second tank in the first row gets 1, etc., the first tank in
+     * the second row gets `width`, etc.
      */
-    private sheetToTank(labels: Row, data: Row): Tank {
-        return labels.map((value: CellValue, i: number, labels: Row): Field => {
-            return {
-                label: value,
-                data: data[i],
-            };
-        });
+    private static hashLocation(width: number, loc: Location): number {
+        return width * (Database.rowToNum(loc.row) - 1) + loc.col - 1;
     }
 
-    private findLocation(loc: Location): [xlsx.WorkSheet, number] {
-        const sheet: xlsx.WorkSheet = this.db.Sheets[TANK_SHEET_NAME];
-        const row = loc.row;
-        return [sheet, row];
+    /**
+     * converts the letter-based row labels to 1-indexed numbers 
+     */
+    private static rowToNum(row: string): number {
+        const asciiVal: number = row.charCodeAt(0);
+        return asciiVal > 96 ? asciiVal - 96 : asciiVal - 64;
     }
 
     /**
@@ -85,22 +166,17 @@ class Database {
      * fields populated from the database.
      */
     readTank(loc: Location): Tank {
-        const [sheet, row] = this.findLocation(loc);
-
-        const labels: Row = this.getRow(sheet, 0);
-        const data: Row = this.getRow(sheet, row);
-
-        const tank: Tank = this.sheetToTank(labels, data);
-        return tank;
+        const rack: Rack = this.racks[loc.rack];
+        return this.racks[rack.rackNum].tanks[Database.hashLocation(rack.size.width, loc)];
     }
 
     /**
      * Writes a Tank object to the database, reading data from the object's
      * fields.
      */
-    writeTank(loc: Location, tank:Tank): void {
-        // TODO implement
-        console.log(`writeTank(${ loc.row }, ${ loc.col })`);
+    writeTank(loc: Location, tank: Tank): void {
+        const rack: Rack = this.racks[loc.rack];
+        this.racks[rack.rackNum].tanks[Database.hashLocation(rack.size.width, loc)] = tank;
     }
 
     /**
