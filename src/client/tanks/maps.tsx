@@ -1,9 +1,9 @@
 import React from 'react';
 import { Button, Stack } from '@chakra-ui/react';
-import type { Location } from '../../server/database';
+import type { Location, Tank } from '../../server/database';
 
 type Props = {
-    selectTank: (loc: Location) => void,
+    reportTank: (uid: number) => void,
 };
 
 type State = {};
@@ -18,11 +18,23 @@ class Maps extends React.Component<Props, State> {
         ];
     }
 
+    /**
+     * Reports a tank's uid as the selected tank.
+     */
+    private selectTank(loc: Location): void {
+        window.electronAPI.findTank(loc)
+                .then((tank: (Tank | undefined)): void => {
+                    if(tank !== undefined) {
+                        this.props.reportTank(tank.uid);
+                    }
+                });
+    }
+
     override render() {
         return (
             <Stack>
                 { this.getTankLocations().map((loc: Location, i: number, locs: Location[]): JSX.Element => (
-                    <Button onClick={ (): void => this.props.selectTank(loc) } key={ i }>
+                    <Button onClick={ (): void => { this.selectTank(loc) } } key={ i }>
                         <h2>tank { `${ loc.row }${ loc.col }` }</h2>
                     </Button>
                 )) }

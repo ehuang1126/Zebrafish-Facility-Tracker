@@ -4,6 +4,7 @@ const RACK_NAME_PREFIX = 'rack#';
 const ROW_LABEL = 'row';
 const COL_LABEL = 'col';
 const GENE_ID_LABEL = 'gene ID';
+const UID_LABEL = 'UID';
 // these are the maximum dimensions according to the xlsx library
 // const MAX_ROW: number = 1048575;
 // const MAX_COL: number = 16383;
@@ -19,6 +20,7 @@ type Field = {
 type Tank = {
     loc: Location,
     gene: Gene,
+    uid: number,
     fields: Field[],
 };
 
@@ -51,20 +53,88 @@ type Location = {
  * element in the 'data' array.
  */
 class Database {
-    private racks: Rack[];
     private filename: string;
+    private racks: Rack[];
+    private tanks: Map<number, Tank>; 
 
     constructor(filename: string) {
         this.filename = filename;
         const db: xlsx.WorkBook = xlsx.readFile(filename);
 
+        // create a list of all the racks
         this.racks = [];
         db.SheetNames.filter((name: string, i: number, names: string[]): boolean => (
             name.startsWith(RACK_NAME_PREFIX)
-        )).map((name: string, i: number, rackSheets: string[]): void => {
+        )).forEach((name: string, i: number, rackSheets: string[]): void => {
             const rackNum: number = Number(name.substring(RACK_NAME_PREFIX.length));
             this.racks[rackNum] = Database.sheetToRack(db, rackNum);
         })
+    
+        // store all the tanks into a map from UID to tank
+        this.tanks = new Map<number, Tank>();
+        this.racks.forEach((rack: Rack, i: number, racks: Rack[]): void => {
+            rack.tanks.forEach((tank: Tank, j: number, tanks: Tank[]): void => {
+                this.tanks.set(tank.uid, tank);
+            });
+        });
+    }
+
+    /**
+     * Returns a Tank object representing the tank with the given UID and
+     * fields populated from the database.
+     */
+    readTank(uid: number): (Tank | undefined) {
+        return this.tanks.get(uid);
+    }
+
+    /**
+     * Writes a Tank object to the database, reading data from the object's
+     * fields.
+     */
+    writeTank(uid: number, tank: Tank): void {
+        this.tanks.set(uid, tank);
+
+        const rack: (Rack | undefined) = this.racks[tank.loc.rack];
+        rack.tanks[Database.hashLocation(rack.size.width, tank.loc)] = tank;
+    }
+
+    /**
+     * Returns a Gene object representing the gene in the given position with
+     * fields populated from the database.
+     */
+    readGene(id: string): (Gene | undefined) {
+        // TODO implement
+        return `readGene(${ id })`;
+    }
+
+    /**
+     * Writes a Gene object to the database, reading data from the object's
+     * fields.
+     */
+    writeGene(id: string, gene: Gene): void {
+        // TODO implement
+        console.log(`writeGene(${ id })`);
+    }
+
+    /**
+     * Returns the Tank object that represents the tank in the given physical
+     * location.
+     */
+    findTank(loc: Location): (Tank | undefined) {
+        const rack: (Rack | undefined) = this.racks[loc.rack];
+        const tank: (Tank | undefined) = rack.tanks[Database.hashLocation(rack.size.width, loc)];
+        return tank;
+    }
+
+    /**
+     * Attaches the event handlers that send database data back to the renderer.
+     */
+    attachHandlers(ipcMain: Electron.IpcMain): void {
+        ipcMain.handle('db:readTank',  (event, uid: number): (Tank | undefined) => this.readTank(uid));
+        ipcMain.handle('db:writeTank', (event, uid: number, tank: Tank): void => this.writeTank(uid, tank));
+        ipcMain.handle('db:readGene',  (event, id: string): (Gene | undefined) => this.readGene(id));
+        ipcMain.handle('db:writeGene', (event, id: string, gene: Gene): void => this.writeGene(id, gene));
+        ipcMain.handle('db:findTank',  (event, loc: Location): (Tank | undefined) => this.findTank(loc));
     }
 
     /**
@@ -84,7 +154,7 @@ class Database {
 
         // populate the rack from the sheet
         for(let rowNum = 1; rowNum < 1 + rowsOfData; rowNum++) {
-            const tank: Tank = Database.rowToTank(sheet, rowNum);
+            const tank: Tank = Database.rowToTank(rackNum, sheet, rowNum);
             const locationHash = Database.hashLocation(rack.size.width, tank.loc);
             if(locationHash >= 0) { // TODO change to include if any data is present
                 rack.tanks[locationHash] = tank;
@@ -108,17 +178,18 @@ class Database {
     /**
      * converts a row from a sheet into a Tank
      */
-    private static rowToTank(sheet: xlsx.WorkSheet, rowNum: number): Tank {
+    private static rowToTank(rackNum: number, sheet: xlsx.WorkSheet, rowNum: number): Tank {
         const width: number = sheet['!ref'] !== undefined ? 
                 xlsx.utils.decode_range(sheet['!ref']).e.c + 1 :
                 0;
         const tank: Tank = {
             loc: {
-                rack: -1,
+                rack: rackNum,
                 row: '!',
                 col: -1,
             },
             gene: '!',
+            uid: -1,
             fields: [],
         };
 
@@ -128,11 +199,13 @@ class Database {
             const data: CellValue = sheet[ xlsx.utils.encode_cell({ r: rowNum, c: colNum, }) ]?.w;
 
             if(label === ROW_LABEL && data !== undefined) {
-                tank.loc.row = data as string;
+                tank.loc.row = data.toString();
             } else if(label === COL_LABEL && data !== undefined) {
                 tank.loc.col = Number(data);
-            } else if(label === GENE_ID_LABEL) {
-                tank.gene = data as string;
+            } else if(label === GENE_ID_LABEL && data !== undefined) {
+                tank.gene = data.toString();
+            } else if(label === UID_LABEL) {
+                tank.uid = Number(data);
             } else {
                 tank.fields.push({
                     label: label,
@@ -159,53 +232,6 @@ class Database {
     private static rowToNum(row: string): number {
         const asciiVal: number = row.charCodeAt(0);
         return asciiVal > 96 ? asciiVal - 96 : asciiVal - 64;
-    }
-
-    /**
-     * Returns a Tank object representing the tank in the given position with
-     * fields populated from the database.
-     */
-    readTank(loc: Location): Tank {
-        const rack: Rack = this.racks[loc.rack];
-        return this.racks[rack.rackNum].tanks[Database.hashLocation(rack.size.width, loc)];
-    }
-
-    /**
-     * Writes a Tank object to the database, reading data from the object's
-     * fields.
-     */
-    writeTank(loc: Location, tank: Tank): void {
-        const rack: Rack = this.racks[loc.rack];
-        this.racks[rack.rackNum].tanks[Database.hashLocation(rack.size.width, loc)] = tank;
-        console.log(tank);
-    }
-
-    /**
-     * Returns a Gene object representing the tank in the given position with
-     * fields populated from the database.
-     */
-    readGene(id: string): Gene {
-        // TODO implement
-        return `readGene(${ id })`;
-    }
-
-    /**
-     * Writes a Gene object to the database, reading data from the object's
-     * fields.
-     */
-    writeGene(id: string, gene: Gene): void {
-        // TODO implement
-        console.log(`writeGene(${ id })`);
-    }
-
-    /**
-     * Attaches the event handlers that send database data back to the renderer.
-     */
-    attachHandlers(ipcMain: Electron.IpcMain) {
-        ipcMain.handle('db:readTank',  (event, loc: Location) => this.readTank(loc));
-        ipcMain.handle('db:writeTank', (event, loc: Location, tank: Tank) => this.writeTank(loc, tank));
-        ipcMain.handle('db:readGene',  (event, id: string) => this.readGene(id));
-        ipcMain.handle('db:writeGene', (event, id: string, gene: Gene) => this.writeGene(id, gene));
     }
 }
 

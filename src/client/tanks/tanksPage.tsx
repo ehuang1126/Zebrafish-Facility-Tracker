@@ -2,17 +2,18 @@ import React from 'react';
 import { Tabs, TabList, Tab, TabPanels, TabPanel, Button, Flex, CloseButton } from '@chakra-ui/react';
 import TankViewer from './tankViewer';
 import Maps from './maps';
-import type { Location } from '../../server/database';
+import type { Tank } from '../../server/database';
 
 import './tanksPage.css';
 
 type TabState = {
     tankSelected: boolean,
-    loc: Location,
+    uid: number,
+    name: string,
 };
 
 type Props = {
-    registerJumpHandler: (handler: (loc: Location) => void) => void ,
+    registerJumpHandler: (handler: (uid: number) => void) => void ,
 };
 
 type State = {
@@ -43,11 +44,9 @@ class TanksPage extends React.Component<Props, State> {
     /**
      * Opens a new tab set to a certain tank.
      */
-    jumpToTank(loc: Location): void {
-        this.setState((state: Readonly<State>, props: Readonly<Props>): Readonly<State> => {
-            const newTabState: Readonly<State> = this._newTab(state, props);
-            return this._selectTank(newTabState.currentTab, loc)(newTabState, props);
-        });
+    jumpToTank(uid: number): void {
+        this.newTab();
+        this.selectTank(-1)(uid);
     }
 
     /**
@@ -59,11 +58,8 @@ class TanksPage extends React.Component<Props, State> {
         const tabIndex: number = state.tabs.length;
         const newTab: TabState = {
             tankSelected: false,
-            loc: {
-                rack: -1,
-                row: '!',
-                col: -1,
-            },
+            uid: -1,
+            name: 'new tab',
         };
 
         const newTabs: TabState[] = Array.from(state.tabs);
@@ -110,25 +106,28 @@ class TanksPage extends React.Component<Props, State> {
     }
 
     /**
-     * A closure that selects a tank for a given tab. Split into two for use in the jump methods.
+     * A closure that selects a tank for a given tab.
+     * Uses the current tab if -1 is given for the tabnum.
      */
-    selectTank(tabNum: number): (loc: Location) => void {
-        return (loc: Location) => {
-            this.setState(this._selectTank(tabNum, loc));
+    selectTank(tabNum: number): (uid: number) => void {
+        return (uid: number): void => {
+            window.electronAPI.readTank(uid).then((tank: (Tank | undefined)): void => {
+                if(tank !== undefined) {
+                    this.setState((state: Readonly<State>, props: Readonly<Props>): Readonly<State> => {
+                        const tabs: TabState[] = Array.from(state.tabs);
+                        tabs[tabNum >= 0 ? tabNum : state.currentTab] = {
+                            tankSelected: true,
+                            uid: uid,
+                            name: `tank ${ tank.loc.row }${ tank.loc.col }`,
+                        };
+                        return {
+                            tabs: tabs,
+                            currentTab: state.currentTab,
+                        };
+                    });
+                }
+            });
         }
-    }
-    private _selectTank(tabNum: number, loc: Location): (state: Readonly<State>, props: Readonly<Props>) => Readonly<State> {
-        return (state: Readonly<State>, props: Readonly<Props>): Readonly<State> => {
-            const tabs: TabState[] = Array.from(state.tabs);
-            tabs[tabNum] = {
-                tankSelected: true,
-                loc: loc,
-            };
-            return {
-                tabs: tabs,
-                currentTab: state.currentTab,
-            };
-        };
     }
 
     override render(): JSX.Element {
@@ -140,9 +139,9 @@ class TanksPage extends React.Component<Props, State> {
                         { this.state.tabs.map((tabState: TabState, tabNum: number, tabs: TabState[]): JSX.Element =>
                             <Tab className='tank-tab' key={ tabNum }>
                                 <Flex>
-                                    { tabState.tankSelected ? `tank ${ tabState.loc.row }${ tabState.loc.col }` : 'new tab' }
+                                    { tabState.name }
                                     <CloseButton className='tank-tab-close' size='sm'
-                                            onClick={ () => { this.closeTab(tabNum) } } />
+                                            onClick={ (): void => { this.closeTab(tabNum) } } />
                                 </Flex>
                             </Tab>
                         ) }
@@ -153,8 +152,8 @@ class TanksPage extends React.Component<Props, State> {
                     { this.state.tabs.map((tabState: TabState, tabNum: number, tabs: TabState[]): JSX.Element =>
                         <TabPanel key={ tabNum }>
                             { tabState.tankSelected ?
-                                    <TankViewer loc={ tabState.loc } /> :
-                                    <Maps selectTank={ this.selectTank(tabNum) } />
+                                    <TankViewer uid={ tabState.uid } /> :
+                                    <Maps reportTank={ this.selectTank(tabNum) } />
                             }
                         </TabPanel>
                     ) }

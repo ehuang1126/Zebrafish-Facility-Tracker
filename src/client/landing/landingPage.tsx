@@ -1,11 +1,10 @@
 import React from 'react';
 import { Box, Flex, Link, Text } from '@chakra-ui/react';
-import type { Location } from '../../server/database'
 
 import './landingPage.css';
 
 type Props = {
-    jumpTank?: (loc: Location) => void,
+    jumpTank?: (uid: number) => void,
 };
 
 type State = {};
@@ -19,13 +18,14 @@ class LandingPage extends React.Component<Props, State> {
      * convert tank and gene references into jump links.
      */
     // TODO this needs to be moved, probably to a utils file.
-    private embedJumps(loc: Location): JSX.Element {
-        const text = `tank(${ loc.row },${ loc.col })`;
+    private embedJumps(uid: number): JSX.Element {
+        // TODO figure out how these jumps should be labeled
+        const text = `tank id#${ uid }`;
         if(this.props.jumpTank !== undefined) {
             return (
                 <Link onClick={ (): void => {
                     if(this.props.jumpTank) {
-                        this.props.jumpTank(loc);
+                        this.props.jumpTank(uid);
                     }
                 } }>
                     <u>
@@ -47,7 +47,7 @@ class LandingPage extends React.Component<Props, State> {
             <Flex flexDirection='row'>
                 <Box id='news-pane'>
                     <Text>This is where the news goes.</Text>
-                    <Text>jump to { this.embedJumps({ rack: 1, row: 'A', col: 3, }) }</Text>
+                    <Text>jump to { this.embedJumps(3) }</Text>
                 </Box>
                 <Box id='warnings-pane'>
                     <Text>This is where the warnings go.</Text>

@@ -2,7 +2,6 @@ import React from 'react';
 import { Tabs, TabList, TabPanels, Tab, TabPanel } from '@chakra-ui/react';
 import LandingPage from '../landing/landingPage';
 import TanksPage from '../tanks/tanksPage';
-import type { Location } from '../../server/database';
 import GenesPage from '../genes/genesPage';
 
 import './view.css';
@@ -11,7 +10,7 @@ type Props = {};
 
 type State = {
     currentTab: number,
-    jumpTank?: (loc: Location) => void,
+    jumpTank?: (uid: number) => void,
 };
 
 /**
@@ -29,9 +28,9 @@ class View extends React.Component<Props, State> {
     /**
      * This method registers a handler for a 'jump to Tank' event.
      */
-    registerJumpTankHandler(handler: (loc: Location) => void): void {
-        this.setState({ jumpTank: (loc: Location) => {
-            handler(loc);
+    registerJumpTankHandler(handler: (uid: number) => void): void {
+        this.setState({ jumpTank: (uid: number) => {
+            handler(uid);
             this.setState({currentTab: 1})
         } });
     }
