@@ -1,14 +1,14 @@
 import React from 'react';
-import { Table, TableContainer, Tbody, Td, Tr, Text, Textarea } from '@chakra-ui/react';
+import { Table, TableContainer, Tbody, Td, Tr, Text, Textarea, Stack, Button } from '@chakra-ui/react';
 import type { CellValue, Field, Tank, Location } from '../../server/database.js';
 
 type Props = {
     loc: Location,
-    isEditing: boolean,
 };
 
 type State = {
     tank?: Tank,
+    isEditing: boolean,
 };
 
 /**
@@ -20,6 +20,7 @@ class TankViewer extends React.Component<Props, State> {
         super(props);
         this.state = {
             tank: undefined,
+            isEditing: false,
         };
     }
 
@@ -78,6 +79,7 @@ class TankViewer extends React.Component<Props, State> {
                 
                 return {
                     tank: tank,
+                    isEditing: state.isEditing,
                 };
             } else {
                 return state;
@@ -86,37 +88,55 @@ class TankViewer extends React.Component<Props, State> {
     }
 
     /**
+     * This toggles between edit and view. Importantly, it also saves back to
+     * the database when toggling back from edit.
+     */
+    private toggleEdit(): void {
+        console.log(this.state.tank);
+        if(this.state.isEditing && this.state.tank !== undefined) {
+            window.electronAPI.writeTank(this.props.loc, this.state.tank);
+        }
+        this.setState({ isEditing: !this.state.isEditing, });
+    }
+
+    /**
      * Converts this tab's Tank object to JSX.
      */
     private generateJSX(): JSX.Element {
         return (
-            <TableContainer id='tank-table'>
-                <Table variant='striped'>
-                    <Tbody> {
-                        this.state.tank?.fields.filter((field: Field, i: number, fields: Field[]): boolean => 
-                            this.props.isEditing || (this.cellValueNotEmpty(field.label) && this.cellValueNotEmpty(field.data))
-                        ).map((field: Field, i: number, fields: Field[]): JSX.Element => {
-                            return (
-                                <Tr key={ i }>
-                                    <Td>{ field.label }</Td>
-                                    <Td> {
-                                        this.props.isEditing ?
-                                            <Textarea value={ field.data } rows={ 1 } 
-                                                    onChange={ (e) => { this.saveData(i, e.target.value) } }
-                                            /> :
-                                            field.data
-                                    } </Td>
-                                </Tr>
-                            );
-                        })
-                    } </Tbody>
-                </Table>
-            </TableContainer>
+            <Stack>
+                <TableContainer id='tank-table'>
+                    <Table variant='striped'>
+                        <Tbody> {
+                            this.state.tank?.fields.filter((field: Field, i: number, fields: Field[]): boolean => 
+                                this.state.isEditing ||
+                                        (this.cellValueNotEmpty(field.label) &&
+                                        this.cellValueNotEmpty(field.data))
+                            ).map((field: Field, i: number, fields: Field[]): JSX.Element => {
+                                return (
+                                    <Tr key={ i }>
+                                        <Td>{ field.label }</Td>
+                                        <Td> {
+                                            this.state.isEditing ?
+                                                <Textarea value={ field.data } rows={ 1 } 
+                                                        onChange={ (e) => { this.saveData(i, e.target.value) } }
+                                                /> :
+                                                field.data
+                                        } </Td>
+                                    </Tr>
+                                );
+                            })
+                        } </Tbody>
+                    </Table>
+                </TableContainer>
+                <Button onClick={ this.toggleEdit.bind(this) }> {
+                    this.state.isEditing ? 'save' : 'edit'
+                } </Button>
+            </Stack>
         );
     }
 
     override render(): JSX.Element {
-        console.log(this.state?.tank);
         if(this.state?.tank) {
             return this.generateJSX();
         } else {

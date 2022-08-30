@@ -31,8 +31,6 @@ type Rack = {
     tanks: Tank[],
 };
 
-type Row = CellValue[];
-
 type Gene = any; // TODO implement
 
 type Location = {
@@ -54,8 +52,10 @@ type Location = {
  */
 class Database {
     private racks: Rack[];
+    private filename: string;
 
     constructor(filename: string) {
+        this.filename = filename;
         const db: xlsx.WorkBook = xlsx.readFile(filename);
 
         this.racks = [];
@@ -177,6 +177,7 @@ class Database {
     writeTank(loc: Location, tank: Tank): void {
         const rack: Rack = this.racks[loc.rack];
         this.racks[rack.rackNum].tanks[Database.hashLocation(rack.size.width, loc)] = tank;
+        console.log(tank);
     }
 
     /**

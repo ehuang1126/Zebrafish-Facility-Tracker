@@ -153,7 +153,7 @@ class TanksPage extends React.Component<Props, State> {
                     { this.state.tabs.map((tabState: TabState, tabNum: number, tabs: TabState[]): JSX.Element =>
                         <TabPanel key={ tabNum }>
                             { tabState.tankSelected ?
-                                    <TankViewer loc={ tabState.loc } isEditing={ true } /> :
+                                    <TankViewer loc={ tabState.loc } /> :
                                     <Maps selectTank={ this.selectTank(tabNum) } />
                             }
                         </TabPanel>
