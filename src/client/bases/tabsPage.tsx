@@ -91,7 +91,7 @@ abstract class TabsPage extends React.Component<Props, State> {
      * elements.
      */
     protected selectTab(tabNum: number): void {
-        this.setState((state: Readonly<State>, props: Readonly<Props>): Readonly<State> => {
+        this.setState((state: Readonly<State>): Readonly<State> => {
             return {
                 tabs: state.tabs,
                 currentTab: tabNum,
@@ -105,7 +105,7 @@ abstract class TabsPage extends React.Component<Props, State> {
                     index={ this.state.currentTab } onChange={ this.selectTab.bind(this) }>
                 <Flex maxWidth='100vw'>
                     <TabList id='tab-handle-row'>
-                        { this.state.tabs.map((tabState: TabState, tabNum: number, tabs: TabState[]): JSX.Element =>
+                        { this.state.tabs.map((tabState: TabState, tabNum: number): JSX.Element =>
                             <Tab className='tab-handle' key={ tabNum }>
                                 <Flex>
                                     { tabState.name }
@@ -118,7 +118,7 @@ abstract class TabsPage extends React.Component<Props, State> {
                     <Button onClick={ this.newTab.bind(this) }>+</Button>
                 </Flex>
                 <TabPanels>
-                    { this.state.tabs.map((tabState: TabState, tabNum: number, tabs: TabState[]): JSX.Element =>
+                    { this.state.tabs.map((tabState: TabState, tabNum: number): JSX.Element =>
                         <TabPanel key={ tabNum }>
                             { this.renderTabContent(tabNum) }
                         </TabPanel>

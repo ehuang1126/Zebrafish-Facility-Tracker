@@ -9,7 +9,7 @@ abstract class TabsViewer<P, S> extends React.Component<P, S> {
      * Excludes undefined, empty string, and 'nan'
      */
     private static cellValueNotEmpty(value: CellValue): boolean {
-        return value !== undefined && (typeof value === 'number' || (value !== 'nan' && value.trim().length > 0));
+        return (typeof value === 'number' || (value !== 'nan' && value.trim().length > 0));
     }
  
     /**
@@ -32,18 +32,18 @@ abstract class TabsViewer<P, S> extends React.Component<P, S> {
                 <TableContainer id='tank-table'>
                     <Table variant='striped'>
                         <Tbody> {
-                            fields.filter((field: Field, i: number, fields: Field[]): boolean => 
+                            fields.filter((field: Field): boolean => 
                                 isEditing ||
                                         (TabsViewer.cellValueNotEmpty(field.label) &&
                                         TabsViewer.cellValueNotEmpty(field.data))
-                            ).map((field: Field, i: number, fields: Field[]): JSX.Element => {
+                            ).map((field: Field, i: number): JSX.Element => {
                                 return (
                                     <Tr key={ i }>
                                         <Td>{ field.label }</Td>
                                         <Td> {
                                             isEditing ?
                                                 <Textarea value={ field.data } rows={ 1 } 
-                                                        onChange={ (e) => { this.saveData(i, e.target.value) } }
+                                                        onChange={ (e): void => { this.saveData(i, e.target.value) } }
                                                 /> :
                                                 field.data
                                         } </Td>

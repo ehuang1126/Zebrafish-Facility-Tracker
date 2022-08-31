@@ -34,7 +34,7 @@ class TankViewer extends TabsViewer<Props, State> {
      * Actually loads the Tank data from the database.
      */
     override componentDidMount() {
-        (async () => {
+        (async (): Promise<void> => {
             this.setState({
                 tank: await window.electronAPI.readTank(this.props.uid),
             });
@@ -58,23 +58,25 @@ class TankViewer extends TabsViewer<Props, State> {
         }
 
         // save the data into state
-        this.setState((state: Readonly<State>, props: Readonly<Props>): Readonly<State> => {
-            if(state.tank) {
-                const tank: Tank = {
-                    loc: state.tank.loc,
-                    gene: state.tank.gene,
-                    uid: state.tank.uid,
-                    fields: Array.from(state.tank.fields),
-                }
-                tank.fields[fieldNum].data = checkedData;
-                
-                return {
-                    tank: tank,
-                    isEditing: state.isEditing,
-                };
-            } else {
+        this.setState((state: Readonly<State>): Readonly<State> => {
+            if(state.tank === undefined) {
                 return state;
             }
+
+            const tank: Tank = {
+                loc: state.tank.loc,
+                gene: state.tank.gene,
+                uid: state.tank.uid,
+                fields: Array.from(state.tank.fields),
+            }
+            if(tank.fields[fieldNum] !== undefined) {
+                tank.fields[fieldNum].data = checkedData;
+            }
+            
+            return {
+                tank: tank,
+                isEditing: state.isEditing,
+            };
         });
     }
 

@@ -52,11 +52,7 @@ class View extends React.Component<Props, State> {
      * elements.
      */
     private selectTab(tabNum: number): void {
-        this.setState((state: Readonly<State>, props: Readonly<Props>): Readonly<State> => {
-            return {
-                currentTab: tabNum,
-            };
-        });
+        this.setState({ currentTab: tabNum, });
     }
 
     override render(): JSX.Element {

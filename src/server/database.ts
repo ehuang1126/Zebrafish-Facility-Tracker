@@ -69,17 +69,17 @@ class Database {
 
         // create a list of all the racks
         this.racks = [];
-        db.SheetNames.filter((name: string, i: number, names: string[]): boolean => (
+        db.SheetNames.filter((name: string): boolean => (
             name.startsWith(RACK_NAME_PREFIX)
-        )).forEach((name: string, i: number, rackSheets: string[]): void => {
+        )).forEach((name: string): void => {
             const rackNum: number = Number(name.substring(RACK_NAME_PREFIX.length));
-            this.racks[rackNum] = Database.sheetToRack(db, rackNum);
+            this.racks[rackNum - 1] = Database.sheetToRack(db, rackNum);
         })
     
         // store all the tanks into a map from UID to tank
         this.tanks = new Map<number, Tank>();
-        this.racks.forEach((rack: Rack, i: number, racks: Rack[]): void => {
-            rack.tanks.forEach((tank: Tank, j: number, tanks: Tank[]): void => {
+        this.racks.forEach((rack: Rack): void => {
+            rack.tanks.forEach((tank: Tank): void => {
                 this.tanks.set(tank.uid, tank);
             });
         });
@@ -104,7 +104,7 @@ class Database {
     writeTank(uid: number, tank: Tank): void {
         this.tanks.set(uid, tank);
 
-        const rack: (Rack | undefined) = this.racks[tank.loc.rack];
+        const rack: (Rack | undefined) = this.racks[tank.loc.rack - 1];
         rack.tanks[Database.hashLocation(rack.size.width, tank.loc)] = tank;
     }
 
@@ -129,7 +129,7 @@ class Database {
      * location.
      */
     findTank(loc: Location): (Tank | undefined) {
-        const rack: (Rack | undefined) = this.racks[loc.rack];
+        const rack: (Rack | undefined) = this.racks[loc.rack - 1];
         const tank: (Tank | undefined) = rack.tanks[Database.hashLocation(rack.size.width, loc)];
         return tank;
     }
@@ -214,8 +214,8 @@ class Database {
 
         // populate the tank from the row of data
         for(let colNum: number = 0; colNum < width; colNum++) {
-            const label: CellValue = sheet[ xlsx.utils.encode_cell({ r: 0, c: colNum, }) ]?.w;
-            const data: CellValue = sheet[ xlsx.utils.encode_cell({ r: rowNum, c: colNum, }) ]?.w;
+            const label: (CellValue | undefined) = sheet[ xlsx.utils.encode_cell({ r: 0, c: colNum, }) ]?.w;
+            const data: (CellValue | undefined) = sheet[ xlsx.utils.encode_cell({ r: rowNum, c: colNum, }) ]?.w;
 
             if(label === ROW_LABEL && data !== undefined) {
                 tank.loc.row = data.toString();
@@ -227,8 +227,8 @@ class Database {
                 tank.uid = Number(data);
             } else {
                 tank.fields.push({
-                    label: label,
-                    data: data,
+                    label: label ?? '',
+                    data: data ?? '',
                 });
             }
         }
@@ -273,15 +273,15 @@ class Database {
 
             // parse the row
             for(let c = 0; c < width; c++) {
-                const label: CellValue = sheet[ xlsx.utils.encode_cell({ r: 0, c: c, }) ]?.w;
-                const data: CellValue = sheet[ xlsx.utils.encode_cell({ r: r, c: c, }) ]?.w;
+                const label: (CellValue | undefined) = sheet[ xlsx.utils.encode_cell({ r: 0, c: c, }) ]?.w;
+                const data: (CellValue | undefined) = sheet[ xlsx.utils.encode_cell({ r: r, c: c, }) ]?.w;
 
                 if(label === GENE_ID_LABEL && data !== undefined) {
                     gene.uid = data.toString();
                 } else {
                     gene.fields.push({
-                        label: label,
-                        data: data,
+                        label: label ?? '',
+                        data: data ?? '',
                     });
                 }
             }

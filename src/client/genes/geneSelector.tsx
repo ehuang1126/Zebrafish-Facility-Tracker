@@ -7,7 +7,7 @@ type Props = {
 };
 
 type State = {
-    genes: Map<string, Gene>,
+    genes?: Map<string, Gene>,
 };
 
 class GeneSelector extends React.Component<Props, State> {
@@ -15,7 +15,7 @@ class GeneSelector extends React.Component<Props, State> {
      * Actually loads the genes from the database.
      */
     override componentDidMount() {
-        (async () => {
+        (async (): Promise<void> => {
             this.setState({
                 genes: await window.electronAPI.getGenes(),
             });
@@ -34,24 +34,20 @@ class GeneSelector extends React.Component<Props, State> {
                 });
     }
 
-    private generateJSX(): JSX.Element {
-        return (
-            <Wrap>
-                { Array.from(this.state.genes.entries(),
-                        ([uid, gene]: [string, Gene], i: number): JSX.Element => {
-                    return (
-                        <Button onClick={ (): void => { this.selectGene(uid) } } key={ i }>
-                            <h2>gene { `${ uid }` }</h2>
-                        </Button>
-                    );
-                }) }
-            </Wrap>
-        );
-    }
-
     override render(): JSX.Element {
         if(this.state?.genes !== undefined) {
-            return this.generateJSX();
+            return (
+                <Wrap>
+                    { Array.from(this.state.genes.entries(),
+                            ([uid, gene]: [string, Gene], i: number): JSX.Element => {
+                        return (
+                            <Button onClick={ (): void => { this.selectGene(uid) } } key={ i }>
+                                <h2>gene { `${ uid }` }</h2>
+                            </Button>
+                        );
+                    }) }
+                </Wrap>
+            );
         } else {
             return <Text>loading</Text>;
         }

@@ -1,5 +1,5 @@
 import TabsPage from '../bases/tabsPage';
-import type { Props, State, TabState } from '../bases/tabsPage';
+import type { State, TabState } from '../bases/tabsPage';
 import GeneViewer from './geneViewer';
 import GeneSelector from './geneSelector';
 
@@ -19,7 +19,7 @@ class GenesPage extends TabsPage {
     selectGene(tabNum: number): (uid: string) => void {
         return (uid: string): void => {
             console.log(uid)
-            this.setState((state: Readonly<State>, props: Readonly<Props>): Readonly<State> => {
+            this.setState((state: Readonly<State>): Readonly<State> => {
                 const tabs: TabState[] = Array.from(state.tabs);
                 tabs[tabNum >= 0 ? tabNum : state.currentTab] = {
                     contentSelected: true,
@@ -35,6 +35,10 @@ class GenesPage extends TabsPage {
     }
 
     protected override renderTabContent(tabNum: number): JSX.Element {
+        if(this.state.tabs[tabNum] === undefined) {
+            return <div />
+        }
+
         if(this.state.tabs[tabNum].contentSelected) {
             return <GeneViewer uid={ this.state.tabs[tabNum].contentID.toString() } />
         } else {

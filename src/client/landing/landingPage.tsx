@@ -19,50 +19,55 @@ class LandingPage extends React.Component<Props, State> {
      */
     // TODO this needs to be moved, probably to a utils file.
     private embedTankJumps(uid: number): JSX.Element {
-        // TODO figure out how these jumps should be labeled
         const text = `tank id#${ uid }`;
-        if(this.props.jumpTank !== undefined) {
-            return (
-                <Link onClick={ (): void => {
-                    if(this.props.jumpTank) {
-                        this.props.jumpTank(uid);
-                    }
-                } }>
-                    <u>
-                        { text }
-                    </u>
-                </Link>
-            );
-        } else {
+
+        // on error or not quite yet loaded
+        if(this.props.jumpTank === undefined) {
             return (
                 <Text>
                     { text }
                 </Text>
             );
         }
+
+        // generate jump link
+        return (
+            <Link onClick={ (): void => {
+                if(this.props.jumpTank !== undefined) {
+                    this.props.jumpTank(uid);
+                }
+            } }>
+                <u>
+                    { text }
+                </u>
+            </Link>
+        );
     }
     private embedGeneJumps(uid: string): JSX.Element {
         // TODO figure out how these jumps should be labeled
         const text = `gene ${ uid }`;
+
+        // on error or not quite yet loaded
         if(this.props.jumpGene !== undefined) {
-            return (
-                <Link onClick={ (): void => {
-                    if(this.props.jumpGene) {
-                        this.props.jumpGene(uid);
-                    }
-                } }>
-                    <u>
-                        { text }
-                    </u>
-                </Link>
-            );
-        } else {
             return (
                 <Text>
                     { text }
                 </Text>
             );
         }
+
+        // generate jump link
+        return (
+            <Link onClick={ (): void => {
+                if(this.props.jumpGene) {
+                    this.props.jumpGene(uid);
+                }
+            } }>
+                <u>
+                    { text }
+                </u>
+            </Link>
+        );
     }
 
     override render(): JSX.Element {

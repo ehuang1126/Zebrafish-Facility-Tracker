@@ -31,7 +31,7 @@ class GeneViewer extends TabsViewer<Props, State> {
      * Actually loads the Tank data from the database.
      */
     override componentDidMount() {
-        (async () => {
+        (async (): Promise<void> => {
             this.setState({
                 gene: await window.electronAPI.readGene(this.props.uid),
             });
@@ -47,7 +47,7 @@ class GeneViewer extends TabsViewer<Props, State> {
         let checkedData: CellValue = data;
 
         // check if number
-        if(data && data.trim().length > 0) {
+        if(data.trim().length > 0) {
             const parsedNum: number = Number(data);
             if(!Number.isNaN(parsedNum)) {
                 checkedData = parsedNum;
@@ -55,21 +55,23 @@ class GeneViewer extends TabsViewer<Props, State> {
         }
 
         // save the data into state
-        this.setState((state: Readonly<State>, props: Readonly<Props>): Readonly<State> => {
-            if(state.gene) {
-                const gene: Gene = {
-                    uid: state.gene.uid,
-                    fields: Array.from(state.gene.fields),
-                }
-                gene.fields[fieldNum].data = checkedData;
-                
-                return {
-                    gene: gene,
-                    isEditing: state.isEditing,
-                };
-            } else {
+        this.setState((state: Readonly<State>): Readonly<State> => {
+            if(state.gene === undefined) {
                 return state;
             }
+
+            const gene: Gene = {
+                uid: state.gene.uid,
+                fields: Array.from(state.gene.fields),
+            }
+            if(gene.fields[fieldNum] !== undefined) {
+                gene.fields[fieldNum].data = checkedData;
+            }
+            
+            return {
+                gene: gene,
+                isEditing: state.isEditing,
+            };
         });
     }
 
@@ -84,7 +86,7 @@ class GeneViewer extends TabsViewer<Props, State> {
         }
 
         // toggle editing state
-        this.setState((state: Readonly<State>, props: Readonly<Props>): Readonly<State> => {
+        this.setState((state: Readonly<State>): Readonly<State> => {
             return {
                 gene: state.gene,
                 isEditing: !state.isEditing,
