@@ -5,6 +5,7 @@ const ROW_LABEL = 'row';
 const COL_LABEL = 'col';
 const GENE_ID_LABEL = 'gene ID';
 const UID_LABEL = 'UID';
+const GENE_PAGE_NAME = 'genes';
 // these are the maximum dimensions according to the xlsx library
 // const MAX_ROW: number = 1048575;
 // const MAX_COL: number = 16383;
@@ -19,7 +20,7 @@ type Field = {
 // A tank is an ordered array of label:data pairs.
 type Tank = {
     loc: Location,
-    gene: Gene,
+    gene: string,
     uid: number,
     fields: Field[],
 };
@@ -33,7 +34,10 @@ type Rack = {
     tanks: Tank[],
 };
 
-type Gene = any; // TODO implement
+type Gene = {
+    uid: string,
+    fields: Field[],
+};
 
 type Location = {
     rack: number,
@@ -56,8 +60,10 @@ class Database {
     private filename: string;
     private racks: Rack[];
     private tanks: Map<number, Tank>; 
+    private genes: Map<string, Gene>;
 
     constructor(filename: string) {
+        // load the database into memory
         this.filename = filename;
         const db: xlsx.WorkBook = xlsx.readFile(filename);
 
@@ -77,6 +83,10 @@ class Database {
                 this.tanks.set(tank.uid, tank);
             });
         });
+        
+        // load genes
+        const genePage: (xlsx.WorkSheet | undefined) = db.Sheets[GENE_PAGE_NAME];
+        this.genes = Database.sheetToGenes(genePage);
     }
 
     /**
@@ -102,18 +112,16 @@ class Database {
      * Returns a Gene object representing the gene in the given position with
      * fields populated from the database.
      */
-    readGene(id: string): (Gene | undefined) {
-        // TODO implement
-        return `readGene(${ id })`;
+    readGene(uid: string): (Gene | undefined) {
+        return this.genes.get(uid);
     }
 
     /**
      * Writes a Gene object to the database, reading data from the object's
      * fields.
      */
-    writeGene(id: string, gene: Gene): void {
-        // TODO implement
-        console.log(`writeGene(${ id })`);
+    writeGene(gene: Gene): void {
+        this.genes.set(gene.uid, gene);
     }
 
     /**
@@ -130,16 +138,21 @@ class Database {
         return this.racks;
     }
 
+    getGenes(): Map<string, Gene> {
+        return this.genes;
+    }
+
     /**
      * Attaches the event handlers that send database data back to the renderer.
      */
     attachHandlers(ipcMain: Electron.IpcMain): void {
         ipcMain.handle('db:readTank',  (event, uid: number): (Tank | undefined) => this.readTank(uid));
         ipcMain.handle('db:writeTank', (event, uid: number, tank: Tank): void => this.writeTank(uid, tank));
-        ipcMain.handle('db:readGene',  (event, id: string): (Gene | undefined) => this.readGene(id));
-        ipcMain.handle('db:writeGene', (event, id: string, gene: Gene): void => this.writeGene(id, gene));
+        ipcMain.handle('db:readGene',  (event, uid: string): (Gene | undefined) => this.readGene(uid));
+        ipcMain.handle('db:writeGene', (event, gene: Gene): void => this.writeGene(gene));
         ipcMain.handle('db:findTank',  (event, loc: Location): (Tank | undefined) => this.findTank(loc));
         ipcMain.handle('db:getRacks', (event): Rack[] => this.getRacks());
+        ipcMain.handle('db:getGenes', (event): Map<string, Gene> => this.getGenes());
     }
 
     /**
@@ -147,7 +160,7 @@ class Database {
      */
     private static sheetToRack(db: xlsx.WorkBook, rackNum: number): Rack {
         const rackName: string = RACK_NAME_PREFIX + rackNum;
-        const sheet: xlsx.WorkSheet = db.Sheets[rackName];
+        const sheet: (xlsx.WorkSheet | undefined) = db.Sheets[rackName];
         const rowsOfData: number = sheet['!ref'] !== undefined ?
                 xlsx.utils.decode_range(sheet['!ref']).e.r :
                 0;
@@ -161,7 +174,8 @@ class Database {
         for(let rowNum = 1; rowNum < 1 + rowsOfData; rowNum++) {
             const tank: Tank = Database.rowToTank(rackNum, sheet, rowNum);
             const locationHash = Database.hashLocation(rack.size.width, tank.loc);
-            if(locationHash >= 0) { // TODO change to include if any data is present
+            if(locationHash >= 0) {
+                // TODO change this condition to check whether any data at all is in the row
                 rack.tanks[locationHash] = tank;
             }
         }
@@ -237,6 +251,47 @@ class Database {
     private static rowToNum(row: string): number {
         const asciiVal: number = row.charCodeAt(0);
         return asciiVal > 96 ? asciiVal - 96 : asciiVal - 64;
+    }
+
+    /**
+     * reads a sheet and converts it to a map from gene IDs to Gene objects
+     */
+    private static sheetToGenes(sheet: xlsx.WorkSheet): Map<string, Gene> {
+        const genes = new Map<string, Gene>();
+        const sheetShape: (xlsx.Range | undefined) = sheet['!ref'] !== undefined ?
+                xlsx.utils.decode_range(sheet['!ref']) :
+                undefined;
+        const numRows: number = sheetShape?.e.r ?? 0;
+        const width: number = sheetShape?.e.c ?? 0;
+        
+        // parse the sheet
+        for(let r = 1; r < numRows; r++) {
+            const gene: Gene = {
+                uid: '!',
+                fields: [],
+            };
+
+            // parse the row
+            for(let c = 0; c < width; c++) {
+                const label: CellValue = sheet[ xlsx.utils.encode_cell({ r: 0, c: c, }) ]?.w;
+                const data: CellValue = sheet[ xlsx.utils.encode_cell({ r: r, c: c, }) ]?.w;
+
+                if(label === GENE_ID_LABEL && data !== undefined) {
+                    gene.uid = data.toString();
+                } else {
+                    gene.fields.push({
+                        label: label,
+                        data: data,
+                    });
+                }
+            }
+
+            if(gene.uid !== '!') {
+                genes.set(gene.uid, gene);
+            }
+        }
+
+        return genes;
     }
 }
 

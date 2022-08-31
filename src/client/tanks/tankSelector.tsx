@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, Stack, Text } from '@chakra-ui/react';
+import { Button, Text, Wrap } from '@chakra-ui/react';
 import type { Location, Rack, Tank } from '../../server/database';
 
 type Props = {
@@ -10,7 +10,7 @@ type State = {
     racks: Rack[],
 };
 
-class Maps extends React.Component<Props, State> {
+class TankSelector extends React.Component<Props, State> {
     /**
      * Actually loads the racks from the database.
      */
@@ -23,7 +23,7 @@ class Maps extends React.Component<Props, State> {
     }
 
     /**
-     * Reports a tank's uid as the selected tank.
+     * Reports a tank's uid as the selected item.
      */
     private selectTank(loc: Location): void {
         window.electronAPI.findTank(loc)
@@ -36,7 +36,7 @@ class Maps extends React.Component<Props, State> {
 
     private generateJSX(): JSX.Element {
         return (
-            <Stack>
+            <Wrap>
                 { this.state.racks.flatMap((rack: Rack, i: number, racks: Rack[]): JSX.Element[] => (
                     rack?.tanks.map((tank: Tank, j: number, tanks: Tank[]) => (
                         <Button onClick={ (): void => { this.selectTank(tank.loc) } } key={ `${ i },${ j }` }>
@@ -44,7 +44,7 @@ class Maps extends React.Component<Props, State> {
                         </Button>
                     ))
                 )) }
-            </Stack>
+            </Wrap>
         );
     }
 
@@ -57,4 +57,4 @@ class Maps extends React.Component<Props, State> {
     }
 }
 
-export default Maps;
+export default TankSelector;

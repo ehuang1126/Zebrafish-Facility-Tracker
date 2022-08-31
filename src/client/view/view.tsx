@@ -11,6 +11,7 @@ type Props = {};
 type State = {
     currentTab: number,
     jumpTank?: (uid: number) => void,
+    jumpGene?: (uid: string) => void,
 };
 
 /**
@@ -22,6 +23,7 @@ class View extends React.Component<Props, State> {
         this.state = {
             currentTab: 0,
             jumpTank: undefined,
+            jumpGene: undefined,
         }
     }
 
@@ -32,6 +34,16 @@ class View extends React.Component<Props, State> {
         this.setState({ jumpTank: (uid: number) => {
             handler(uid);
             this.setState({currentTab: 1})
+        } });
+    }
+
+    /**
+     * This method registers a handler for a 'jump to Gene' event.
+     */
+    registerJumpGeneHandler(handler: (uid: string) => void): void {
+        this.setState({ jumpGene: (uid: string) => {
+            handler(uid);
+            this.setState({currentTab: 2})
         } });
     }
 
@@ -59,13 +71,13 @@ class View extends React.Component<Props, State> {
 
                 <TabPanels>
                     <TabPanel key='front'>
-                        <LandingPage jumpTank={ this.state?.jumpTank }/>
+                        <LandingPage jumpTank={ this.state?.jumpTank } jumpGene={ this.state?.jumpGene }/>
                     </TabPanel>
                     <TabPanel key='tanks'>
                         <TanksPage registerJumpHandler={ this.registerJumpTankHandler.bind(this) } />
                     </TabPanel>
                     <TabPanel key='genes'>
-                        <GenesPage />
+                        <GenesPage registerJumpHandler={ this.registerJumpGeneHandler.bind(this) } />
                     </TabPanel>
                 </TabPanels>
             </Tabs>

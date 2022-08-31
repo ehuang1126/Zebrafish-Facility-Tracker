@@ -1,108 +1,21 @@
-import React from 'react';
-import { Tabs, TabList, Tab, TabPanels, TabPanel, Button, Flex, CloseButton } from '@chakra-ui/react';
+import TabsPage from '../bases/tabsPage';
+import type { Props, State, TabState } from '../bases/tabsPage';
 import TankViewer from './tankViewer';
-import Maps from './maps';
+import TankSelector from './tankSelector';
 import type { Tank } from '../../server/database';
-
-import './tanksPage.css';
-
-type TabState = {
-    tankSelected: boolean,
-    uid: number,
-    name: string,
-};
-
-type Props = {
-    registerJumpHandler: (handler: (uid: number) => void) => void ,
-};
-
-type State = {
-    tabs: TabState[],
-    currentTab: number,
-};
 
 /**
  * This class is responsible for everything about tanks. The page has some
  * (positive?) number of tank tabs which each show either a maps page for
  * selecting a tank or a tankData page for showing data.
  */
-class TanksPage extends React.Component<Props, State> {
-    constructor(props: Readonly<Props>) {
-        super(props);
-        this.state = {
-            tabs: [],
-            currentTab: 0,
-        };
-        props.registerJumpHandler(this.jumpToTank.bind(this));
-    }
-
-    /**
-     * must wait until the component is mounted to set state
-     */
-    componentDidMount = this.newTab;
-
+class TanksPage extends TabsPage {
     /**
      * Opens a new tab set to a certain tank.
      */
-    jumpToTank(uid: number): void {
+    override jumpToID(uid: (string | number)): void {
         this.newTab();
-        this.selectTank(-1)(uid);
-    }
-
-    /**
-     * Open a new tab and set it active. Separate into two functions so it can
-     * be called in `closeTab` without breaking the state.
-     */
-    private newTab(): void { this.setState(this._newTab); }
-    private _newTab(state: Readonly<State>, props: Readonly<Props>): Readonly<State> {
-        const tabIndex: number = state.tabs.length;
-        const newTab: TabState = {
-            tankSelected: false,
-            uid: -1,
-            name: 'new tab',
-        };
-
-        const newTabs: TabState[] = Array.from(state.tabs);
-        newTabs.push(newTab);
-        return {
-            tabs: newTabs,
-            currentTab: tabIndex,
-        };
-    }
-
-    /**
-     * Close a tab. If it isn't the current tab, keep the current tab selected.
-     * If it's the current tab, select the tab to the right. If this was the
-     * rightmost tab, then select the tab to the left. If this was the last
-     * tab, then open a new tab.
-     */
-    private closeTab(tabNum: number): void {
-        this.setState((state: Readonly<State>, props: Readonly<Props>): Readonly<State> => {
-            const newTabs: TabState[] = Array.from(state.tabs);
-            newTabs.splice(tabNum, 1);
-            
-            const newTabNum: number = (state.currentTab <= tabNum && tabNum < newTabs.length) ?
-                    state.currentTab : state.currentTab - 1;
-            const newState: Readonly<State> = {
-                tabs: newTabs,
-                currentTab: newTabNum,
-            };
-            
-            return newTabs.length > 0 ? newState : this._newTab(newState, props);
-        });
-    }
-
-    /**
-     * Activates a tab, both in this class's state and in the state of the Tabs
-     * elements.
-     */
-    private selectTab(tabNum: number): void {
-        this.setState((state: Readonly<State>, props: Readonly<Props>): Readonly<State> => {
-            return {
-                tabs: state.tabs,
-                currentTab: tabNum,
-            };
-        });
+        this.selectTank(-1)(Number(uid)); // -1 selects the "current" (new) tab
     }
 
     /**
@@ -116,8 +29,8 @@ class TanksPage extends React.Component<Props, State> {
                     this.setState((state: Readonly<State>, props: Readonly<Props>): Readonly<State> => {
                         const tabs: TabState[] = Array.from(state.tabs);
                         tabs[tabNum >= 0 ? tabNum : state.currentTab] = {
-                            tankSelected: true,
-                            uid: uid,
+                            contentSelected: true,
+                            contentID: uid,
                             name: `tank ${ tank.loc.row }${ tank.loc.col }`,
                         };
                         return {
@@ -127,39 +40,15 @@ class TanksPage extends React.Component<Props, State> {
                     });
                 }
             });
-        }
+        };
     }
 
-    override render(): JSX.Element {
-        return (
-            <Tabs size='sm'
-                    index={ this.state.currentTab } onChange={ this.selectTab.bind(this) }>
-                <Flex maxWidth='100vw'>
-                    <TabList id='tank-tab-row'>
-                        { this.state.tabs.map((tabState: TabState, tabNum: number, tabs: TabState[]): JSX.Element =>
-                            <Tab className='tank-tab' key={ tabNum }>
-                                <Flex>
-                                    { tabState.name }
-                                    <CloseButton className='tank-tab-close' size='sm'
-                                            onClick={ (): void => { this.closeTab(tabNum) } } />
-                                </Flex>
-                            </Tab>
-                        ) }
-                    </TabList>
-                    <Button onClick={ this.newTab.bind(this) }>+</Button>
-                </Flex>
-                <TabPanels>
-                    { this.state.tabs.map((tabState: TabState, tabNum: number, tabs: TabState[]): JSX.Element =>
-                        <TabPanel key={ tabNum }>
-                            { tabState.tankSelected ?
-                                    <TankViewer uid={ tabState.uid } /> :
-                                    <Maps reportTank={ this.selectTank(tabNum) } />
-                            }
-                        </TabPanel>
-                    ) }
-                </TabPanels>
-            </Tabs>
-        );
+    override renderTabContent(tabNum: number): JSX.Element {
+        if(this.state.tabs[tabNum].contentSelected) {
+            return <TankViewer uid={ Number(this.state.tabs[tabNum].contentID) } />
+        } else {
+            return <TankSelector reportTank={ this.selectTank(tabNum) } />
+        }
     }
 }
 

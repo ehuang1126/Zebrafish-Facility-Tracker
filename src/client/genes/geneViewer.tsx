@@ -1,42 +1,39 @@
 import { Text } from '@chakra-ui/react';
 import TabsViewer from '../bases/tabsViewer';
-import type { CellValue, Tank } from '../../server/database';
+import type { CellValue, Gene } from '../../server/database';
 
 type Props = {
-    uid: number,
+    uid: string,
 };
 
 type State = {
-    tank?: Tank,
+    gene?: Gene,
     isEditing: boolean,
 };
 
-/**
- * This class represents the visualizer for a single Tank's data.
- */
-class TankViewer extends TabsViewer<Props, State> {
+class GeneViewer extends TabsViewer<Props, State> {
     constructor(props: Readonly<Props>) {
         super(props);
         this.state = {
-            tank: undefined,
+            gene: undefined,
             isEditing: false,
         };
     }
 
     /**
-     * returns the current state of this page's Tank object
+     * returns the current state of this page's Gene object
      */
-    getTank(): (Tank | undefined) {
-        return this.state.tank;
+    getGene(): (Gene | undefined) {
+        return this.state.gene;
     }
-    
+
     /**
      * Actually loads the Tank data from the database.
      */
     override componentDidMount() {
         (async () => {
             this.setState({
-                tank: await window.electronAPI.readTank(this.props.uid),
+                gene: await window.electronAPI.readGene(this.props.uid),
             });
         })();
     }
@@ -59,17 +56,15 @@ class TankViewer extends TabsViewer<Props, State> {
 
         // save the data into state
         this.setState((state: Readonly<State>, props: Readonly<Props>): Readonly<State> => {
-            if(state.tank) {
-                const tank: Tank = {
-                    loc: state.tank.loc,
-                    gene: state.tank.gene,
-                    uid: state.tank.uid,
-                    fields: Array.from(state.tank.fields),
+            if(state.gene) {
+                const gene: Gene = {
+                    uid: state.gene.uid,
+                    fields: Array.from(state.gene.fields),
                 }
-                tank.fields[fieldNum].data = checkedData;
+                gene.fields[fieldNum].data = checkedData;
                 
                 return {
-                    tank: tank,
+                    gene: gene,
                     isEditing: state.isEditing,
                 };
             } else {
@@ -83,19 +78,27 @@ class TankViewer extends TabsViewer<Props, State> {
      * the database when toggling back from edit.
      */
     protected override toggleEdit(): void {
-        if(this.state.isEditing && this.state.tank !== undefined) {
-            window.electronAPI.writeTank(this.props.uid, this.state.tank);
+        // send it back to the database
+        if(this.state.isEditing && this.state.gene !== undefined) {
+            window.electronAPI.writeGene(this.state.gene);
         }
-        this.setState({ isEditing: !this.state.isEditing, });
-    }
 
+        // toggle editing state
+        this.setState((state: Readonly<State>, props: Readonly<Props>): Readonly<State> => {
+            return {
+                gene: state.gene,
+                isEditing: !state.isEditing,
+            }
+        })
+    }
+    
     override render(): JSX.Element {
-        if(this.state?.tank !== undefined) {
-            return this.generateJSX(this.state.isEditing, this.state.tank.fields);
+        if(this.state?.gene !== undefined) {
+            return this.generateJSX(this.state.isEditing, this.state.gene.fields);
         } else {
             return <Text>loading</Text>;
         }
     }
 }
 
-export default TankViewer;
+export default GeneViewer;
