@@ -1,5 +1,6 @@
 import React from 'react';
 import { Button, CloseButton, Flex, Tab, TabList, TabPanel, TabPanels, Tabs } from '@chakra-ui/react';
+import JumpController from '../jumpController';
 
 import './tabsPage.css';
 
@@ -10,7 +11,7 @@ type TabState = {
 };
 
 type Props = {
-    registerJumpHandler: (handler: (uid: (string | number)) => void) => void ,
+    jumpController: JumpController,
 };
 
 type State = {
@@ -30,7 +31,6 @@ abstract class TabsPage extends React.Component<Props, State> {
             tabs: [],
             currentTab: 0,
         };
-        props.registerJumpHandler(this.jumpToID.bind(this));
     }
 
     /**

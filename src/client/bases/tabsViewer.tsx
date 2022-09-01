@@ -1,8 +1,13 @@
 import React from 'react';
 import { Table, TableContainer, Tbody, Td, Tr, Textarea, Stack, Button } from '@chakra-ui/react';
 import type { CellValue, Field } from '../../server/database';
+import JumpController from '../jumpController';
 
-abstract class TabsViewer<P, S> extends React.Component<P, S> {
+type Props = {
+    jumpController: JumpController,
+};
+
+abstract class TabsViewer<P, S> extends React.Component<(P & Props), S> {
     /**
      * a test to check if a cell's value is actually empty
      * 
@@ -45,7 +50,7 @@ abstract class TabsViewer<P, S> extends React.Component<P, S> {
                                                 <Textarea value={ field.data } rows={ 1 } 
                                                         onChange={ (e): void => { this.saveData(i, e.target.value) } }
                                                 /> :
-                                                field.data
+                                                this.props.jumpController.embedJumps(field.data.toString()) // TODO is always converting to a string fine?
                                         } </Td>
                                     </Tr>
                                 );

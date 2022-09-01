@@ -1,9 +1,14 @@
 import TabsPage from '../bases/tabsPage';
-import type { State, TabState } from '../bases/tabsPage';
+import type { Props, State, TabState } from '../bases/tabsPage';
 import GeneViewer from './geneViewer';
 import GeneSelector from './geneSelector';
 
 class GenesPage extends TabsPage {
+    constructor(props: Readonly<Props>) {
+        super(props);
+        this.props.jumpController.registerGeneJumpHandler(this.jumpToID.bind(this));
+    }
+
     /**
      * Opens a new tab set to a certain gene.
      */
@@ -18,7 +23,6 @@ class GenesPage extends TabsPage {
      */
     selectGene(tabNum: number): (uid: string) => void {
         return (uid: string): void => {
-            console.log(uid)
             this.setState((state: Readonly<State>): Readonly<State> => {
                 const tabs: TabState[] = Array.from(state.tabs);
                 tabs[tabNum >= 0 ? tabNum : state.currentTab] = {
@@ -40,7 +44,7 @@ class GenesPage extends TabsPage {
         }
 
         if(this.state.tabs[tabNum].contentSelected) {
-            return <GeneViewer uid={ this.state.tabs[tabNum].contentID.toString() } />
+            return <GeneViewer uid={ this.state.tabs[tabNum].contentID.toString() } jumpController={ this.props.jumpController } />
         } else {
             return <GeneSelector reportGene={ this.selectGene(tabNum) } />
         }

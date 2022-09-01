@@ -1,5 +1,5 @@
 import TabsPage from '../bases/tabsPage';
-import type { State, TabState } from '../bases/tabsPage';
+import type { Props, State, TabState } from '../bases/tabsPage';
 import TankViewer from './tankViewer';
 import TankSelector from './tankSelector';
 import type { Tank } from '../../server/database';
@@ -10,6 +10,11 @@ import type { Tank } from '../../server/database';
  * selecting a tank or a tankData page for showing data.
  */
 class TanksPage extends TabsPage {
+    constructor(props: Readonly<Props>) {
+        super(props);
+        this.props.jumpController.registerTankJumpHandler(this.jumpToID.bind(this));
+    }
+
     /**
      * Opens a new tab set to a certain tank.
      */
@@ -51,7 +56,7 @@ class TanksPage extends TabsPage {
         }
 
         if(this.state.tabs[tabNum].contentSelected) {
-            return <TankViewer uid={ Number(this.state.tabs[tabNum].contentID) } />
+            return <TankViewer uid={ Number(this.state.tabs[tabNum].contentID) } jumpController={ this.props.jumpController } />
         } else {
             return <TankSelector reportTank={ this.selectTank(tabNum) } />
         }

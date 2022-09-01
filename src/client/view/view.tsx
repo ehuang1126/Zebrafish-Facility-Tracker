@@ -3,6 +3,7 @@ import { Tabs, TabList, TabPanels, Tab, TabPanel } from '@chakra-ui/react';
 import LandingPage from '../landing/landingPage';
 import TanksPage from '../tanks/tanksPage';
 import GenesPage from '../genes/genesPage';
+import JumpController from '../jumpController';
 
 import './view.css';
 
@@ -10,8 +11,7 @@ type Props = {};
 
 type State = {
     currentTab: number,
-    jumpTank?: (uid: number) => void,
-    jumpGene?: (uid: string) => void,
+    jumpController: JumpController,
 };
 
 /**
@@ -22,29 +22,8 @@ class View extends React.Component<Props, State> {
         super(props);
         this.state = {
             currentTab: 0,
-            jumpTank: undefined,
-            jumpGene: undefined,
+            jumpController: new JumpController(this),
         }
-    }
-
-    /**
-     * This method registers a handler for a 'jump to Tank' event.
-     */
-    registerJumpTankHandler(handler: (uid: number) => void): void {
-        this.setState({ jumpTank: (uid: number) => {
-            handler(uid);
-            this.setState({currentTab: 1})
-        } });
-    }
-
-    /**
-     * This method registers a handler for a 'jump to Gene' event.
-     */
-    registerJumpGeneHandler(handler: (uid: string) => void): void {
-        this.setState({ jumpGene: (uid: string) => {
-            handler(uid);
-            this.setState({currentTab: 2})
-        } });
     }
 
     /**
@@ -67,13 +46,13 @@ class View extends React.Component<Props, State> {
 
                 <TabPanels>
                     <TabPanel key='front'>
-                        <LandingPage jumpTank={ this.state?.jumpTank } jumpGene={ this.state?.jumpGene }/>
+                        <LandingPage jumpController={ this.state?.jumpController }/>
                     </TabPanel>
                     <TabPanel key='tanks'>
-                        <TanksPage registerJumpHandler={ this.registerJumpTankHandler.bind(this) } />
+                        <TanksPage jumpController={ this.state?.jumpController }/>
                     </TabPanel>
                     <TabPanel key='genes'>
-                        <GenesPage registerJumpHandler={ this.registerJumpGeneHandler.bind(this) } />
+                        <GenesPage jumpController={ this.state?.jumpController }/>
                     </TabPanel>
                 </TabPanels>
             </Tabs>

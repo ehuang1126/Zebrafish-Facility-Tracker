@@ -1,9 +1,11 @@
 import { Text } from '@chakra-ui/react';
 import TabsViewer from '../bases/tabsViewer';
 import type { CellValue, Tank } from '../../server/database';
+import JumpController from '../jumpController';
 
 type Props = {
     uid: number,
+    jumpController: JumpController,
 };
 
 type State = {
