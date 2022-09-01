@@ -2,6 +2,8 @@ import { Link, Text } from '@chakra-ui/react';
 import { ReactNode } from 'react';
 import View from "./view/view";
 
+const CONTROL_SEQUENCES: RegExp = /(\\T.*\b|\\G.*\b)/;
+
 class JumpController {
     private view: View;
     private tankJumpHandler?: (uid: number) => void;
@@ -57,12 +59,16 @@ class JumpController {
      */
     embedJumps(text: string): JSX.Element[] {
         return text.split(/\r?\n/).map((line: string, i: number): JSX.Element => (
+            // for each line
             <Text key={ i }> {
-                line.split(/(\\T.*\b|\\G.*\b)/).map((match: string, j: number): ReactNode => {
+                line.split(CONTROL_SEQUENCES).map((match: string, j: number): ReactNode => {
+                    // split the line around the control sequences, KEEPING the control sequences in
                     if(j % 2 !== 0) {
+                        // odd indexed elements are the control sequences
                         if(match.charAt(1) === 'T') {
+                            // tank jump link
                             return (
-                                <Link onClick={ (): void => {
+                                <Link key={ j } onClick={ (): void => {
                                     this.jumpToTank(Number(match.substring(2)));
                                 } }>
                                     <u>
@@ -71,8 +77,9 @@ class JumpController {
                                 </Link>
                             );
                         } else if(match.charAt(1) === 'G') {
+                            // gene jump link
                             return (
-                                <Link onClick={ (): void => {
+                                <Link key={ j } onClick={ (): void => {
                                     this.jumpToGene(match.substring(2));
                                 } }>
                                     <u>

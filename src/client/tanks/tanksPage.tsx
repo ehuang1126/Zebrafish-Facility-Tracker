@@ -1,3 +1,4 @@
+import { Text } from '@chakra-ui/react';
 import TabsPage from '../bases/tabsPage';
 import type { Props, State, TabState } from '../bases/tabsPage';
 import TankViewer from './tankViewer';
@@ -52,7 +53,7 @@ class TanksPage extends TabsPage {
 
     override renderTabContent(tabNum: number): JSX.Element {
         if(this.state.tabs[tabNum] === undefined) {
-            return <div />
+            return <Text>loading</Text>;
         }
 
         if(this.state.tabs[tabNum].contentSelected) {

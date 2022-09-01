@@ -1,4 +1,4 @@
-import { Text } from '@chakra-ui/react';
+import { Td, Text, Textarea, Tr } from '@chakra-ui/react';
 import TabsViewer from '../bases/tabsViewer';
 import type { CellValue, Gene } from '../../server/database';
 import JumpController from '../jumpController';
@@ -41,11 +41,24 @@ class GeneViewer extends TabsViewer<Props, State> {
     }
 
     /**
+     * Saves the new tank UID into the current state.
+     */
+    private saveUID(uid: string): void {
+        this.setState((state: Readonly<State>): Readonly<State> => ({
+            gene: this.state.gene !== undefined ? {
+                uid: uid,
+                fields: this.state.gene.fields,
+            } : undefined,
+            isEditing: this.state.isEditing,
+        }));
+    }
+
+    /**
      * saves the edited field into the current state
      * 
      * This attempts to guess if the input is a number.
      */
-    protected override saveData(fieldNum: number, data: string): void {
+    protected override saveField(fieldNum: number, data: string): void {
         let checkedData: CellValue = data;
 
         // check if number
@@ -95,7 +108,21 @@ class GeneViewer extends TabsViewer<Props, State> {
             }
         })
     }
-    
+
+    /**
+     * Converts the Gene object's fields *other* than `fields` to JSX
+     */
+    protected override metadataToJSX(): JSX.Element[] {
+        return [
+            <Tr key='uid'>
+                <Td>UID</Td>
+                <Td>
+                    { this.state.gene?.uid }
+                </Td>
+            </Tr>,
+        ];
+    }
+
     override render(): JSX.Element {
         if(this.state?.gene !== undefined) {
             return this.generateJSX(this.state.isEditing, this.state.gene.fields);

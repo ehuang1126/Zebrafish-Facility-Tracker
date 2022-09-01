@@ -20,13 +20,46 @@ abstract class TabsViewer<P, S> extends React.Component<(P & Props), S> {
     /**
      * saves the edited field into the current state
      */
-    protected abstract saveData(fieldNum: number, data: string): void;
+    protected abstract saveField(fieldNum: number, data: string): void;
 
     /**
      * This toggles between edit and view. Importantly, it also saves back to
      * the database when toggling back from edit.
      */
     protected abstract toggleEdit(): void;
+
+    /**
+     * Converts the fields of the Tank or Gene that are not in `fields` into
+     * table rows.
+     */
+    protected abstract metadataToJSX(): JSX.Element[];
+
+    /**
+     * Converts `fields` into table rows.
+     */
+    private fieldsToJSX(isEditing: boolean, fields: Field[]): JSX.Element[] {
+        return fields.filter((field: Field): boolean => 
+                // filter out empty fields when not editing
+                isEditing ||
+                        (TabsViewer.cellValueNotEmpty(field.label) &&
+                        TabsViewer.cellValueNotEmpty(field.data))
+        ).map((field: Field, i: number): JSX.Element => {
+            // for each visible field
+            return (
+                <Tr key={ i }>
+                    <Td key='label'>{ field.label }</Td>
+                    <Td key='data'>
+                        { isEditing ?
+                            <Textarea value={ field.data } rows={ 1 } 
+                                    onChange={ (e): void => { this.saveField(i, e.target.value) } }
+                            /> :
+                            this.props.jumpController.embedJumps(field.data.toString()) // TODO is always converting to a string fine?
+                        }
+                    </Td>
+                </Tr>
+            );
+        });
+    }
 
     /**
      * Converts this tab's Tank object to JSX.
@@ -36,31 +69,15 @@ abstract class TabsViewer<P, S> extends React.Component<(P & Props), S> {
             <Stack>
                 <TableContainer id='tank-table'>
                     <Table variant='striped'>
-                        <Tbody> {
-                            fields.filter((field: Field): boolean => 
-                                isEditing ||
-                                        (TabsViewer.cellValueNotEmpty(field.label) &&
-                                        TabsViewer.cellValueNotEmpty(field.data))
-                            ).map((field: Field, i: number): JSX.Element => {
-                                return (
-                                    <Tr key={ i }>
-                                        <Td>{ field.label }</Td>
-                                        <Td> {
-                                            isEditing ?
-                                                <Textarea value={ field.data } rows={ 1 } 
-                                                        onChange={ (e): void => { this.saveData(i, e.target.value) } }
-                                                /> :
-                                                this.props.jumpController.embedJumps(field.data.toString()) // TODO is always converting to a string fine?
-                                        } </Td>
-                                    </Tr>
-                                );
-                            })
-                        } </Tbody>
+                        <Tbody>
+                            { this.metadataToJSX() }
+                            { this.fieldsToJSX(isEditing, fields) }
+                        </Tbody>
                     </Table>
                 </TableContainer>
-                <Button onClick={ this.toggleEdit.bind(this) }> {
-                    isEditing ? 'save' : 'edit'
-                } </Button>
+                <Button onClick={ this.toggleEdit.bind(this) }>
+                    { isEditing ? 'save' : 'edit' }
+                </Button>
             </Stack>
         );
     }
