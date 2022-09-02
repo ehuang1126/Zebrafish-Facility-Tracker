@@ -1,6 +1,6 @@
 import { Td, Text, Textarea, Tr } from '@chakra-ui/react';
 import TabsViewer from '../bases/tabsViewer';
-import type { CellValue, Tank, Location } from '../../server/database';
+import type { CellValue, Tank, Location, Field } from '../../server/database';
 import JumpController from '../jumpController';
 
 type Props = {
@@ -54,21 +54,6 @@ class TankViewer extends TabsViewer<Props, State> {
      */
     private static locToString(loc: Location): string {
         return `${loc.rack}${loc.row}${loc.col}`;
-    }
-
-    /**
-     * Saves the new tank UID into the current state.
-     */
-    private saveUID(uid: number): void {
-        this.setState((state: Readonly<State>): Readonly<State> => ({
-            tank: state.tank !== undefined ? {
-                loc: state.tank.loc,
-                gene: state.tank.gene,
-                uid: uid,
-                fields: state.tank.fields,
-            } : undefined,
-            isEditing: this.state.isEditing,
-        }));
     }
 
     /**
@@ -139,34 +124,43 @@ class TankViewer extends TabsViewer<Props, State> {
      * when toggling back from edit.
      */
     protected override toggleEdit(): void {
-        if(this.state.isEditing && this.state.tank !== undefined && this.state.locString !== undefined) {
-            // convert `locString` back to a location
-            const locStringPieces: (RegExpMatchArray | null) = this.state.locString.match(/^(\d+),?(\w+),?(\d+)$/);
-            if(locStringPieces !== null) {
-                // if the locString was properly formatted
-                const loc: Location = {
-                    rack: Number(locStringPieces[1]),
-                    row: locStringPieces[2].toString(),
-                    col: Number(locStringPieces[3]),
-                };
-                this.setState((state: Readonly<State>): Readonly<State> => {
-                    return {
-                        tank: state.tank !== undefined ? {
-                            loc: loc,
-                            gene: state.tank.gene,
-                            uid: state.tank.uid,
-                            fields: state.tank.fields,
-                        } : undefined,
-                        isEditing: this.state.isEditing,
-                    }
-                });
+        this.setState((state: Readonly<State>, props: Readonly<Props>): Readonly<State> => {
+            // deep-ish copy state
+            const newState: State = {
+                tank: state.tank !== undefined ? {
+                    loc: state.tank.loc,
+                    gene: state.tank.gene,
+                    uid: state.tank.uid,
+                    fields: Array.from(state.tank.fields),
+                } : undefined,
+                isEditing: state.isEditing,
+                locString: state.locString,
+            };
+
+            if (newState.isEditing && newState.tank !== undefined && newState.locString !== undefined) {
+                // convert `locString` back to a location
+                const locStringPieces: (RegExpMatchArray | null) = newState.locString.match(/^(\d+),?(\w+),?(\d+)$/);
+                if (locStringPieces !== null) {
+                    // if the locString was properly formatted
+                    const loc: Location = {
+                        rack: Number(locStringPieces[1]),
+                        row: locStringPieces[2].toString().toUpperCase(),
+                        col: Number(locStringPieces[3]),
+                    };
+                    newState.tank.loc = loc;
+                }
+
+                // write back to database
+                console.log('write');
+                window.electronAPI.writeTank(props.uid, newState.tank);
             }
 
-            // write back to database
-            window.electronAPI.writeTank(this.props.uid, this.state.tank);
-        }
-        // toggle `isEditing`
-        this.setState({ isEditing: !this.state.isEditing, });
+            // toggle editing
+            newState.isEditing = !newState.isEditing;
+
+            // check all the fields for location-based tank jump control sequences
+            return newState;
+        });
     }
 
     /**

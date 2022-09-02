@@ -41,20 +41,6 @@ class GeneViewer extends TabsViewer<Props, State> {
     }
 
     /**
-     * Saves the new tank UID into the current state.
-     */
-    private saveUID(uid: string): void {
-        this.setState((state: Readonly<State>): Readonly<State> => ({
-            gene: state.gene !== undefined ? {
-                uid: uid,
-                fields: state.gene.fields,
-                tanks: state.gene.tanks,
-            } : undefined,
-            isEditing: state.isEditing,
-        }));
-    }
-
-    /**
      * saves the edited field into the current state
      * 
      * This attempts to guess if the input is a number.
@@ -102,12 +88,17 @@ class GeneViewer extends TabsViewer<Props, State> {
             window.electronAPI.writeGene(this.state.gene);
         }
 
-        // toggle editing state
         this.setState((state: Readonly<State>): Readonly<State> => {
-            return {
-                gene: state.gene,
-                isEditing: !state.isEditing,
+            // send it back to the database
+            if(state.isEditing && state.gene !== undefined) {
+                window.electronAPI.writeGene(state.gene);
             }
+
+            // toggle editing
+            const newState: State = Object.assign({}, state);
+            newState.isEditing = !state.isEditing;
+
+            return newState;
         })
     }
 
