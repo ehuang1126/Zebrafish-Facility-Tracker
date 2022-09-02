@@ -6,9 +6,6 @@ const COL_LABEL = 'col';
 const GENE_ID_LABEL = 'gene ID';
 const UID_LABEL = 'UID';
 const GENE_PAGE_NAME = 'genes';
-// these are the maximum dimensions according to the xlsx library
-// const MAX_ROW: number = 1048575;
-// const MAX_COL: number = 16383;
 
 type CellValue = (string | number);
 
@@ -37,6 +34,7 @@ type Rack = {
 type Gene = {
     uid: string,
     fields: Field[],
+    tanks: number[],
 };
 
 type Location = {
@@ -66,6 +64,12 @@ class Database {
         // load the database into memory
         this.filename = filename;
         const db: xlsx.WorkBook = xlsx.readFile(filename);
+        
+        // be sure to load genes before tanks, so the tanks can populate the
+        // genes' indices
+        // load genes
+        const genePage: (xlsx.WorkSheet | undefined) = db.Sheets[GENE_PAGE_NAME];
+        this.genes = Database.sheetToGenes(genePage);
 
         // create a list of all the racks
         this.racks = [];
@@ -81,12 +85,9 @@ class Database {
         this.racks.forEach((rack: Rack): void => {
             rack.tanks.forEach((tank: Tank): void => {
                 this.tanks.set(tank.uid, tank);
+                this.genes.get(tank.gene)?.tanks.push(tank.uid);
             });
         });
-        
-        // load genes
-        const genePage: (xlsx.WorkSheet | undefined) = db.Sheets[GENE_PAGE_NAME];
-        this.genes = Database.sheetToGenes(genePage);
     }
 
     /**
@@ -269,6 +270,7 @@ class Database {
             const gene: Gene = {
                 uid: '!',
                 fields: [],
+                tanks: [],
             };
 
             // parse the row

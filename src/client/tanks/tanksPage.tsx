@@ -40,7 +40,7 @@ class TanksPage extends TabsPage {
                     tabs[tabNum >= 0 ? tabNum : state.currentTab] = {
                         contentSelected: true,
                         contentID: uid,
-                        name: `tank ${ tank.loc.row }${ tank.loc.col }`,
+                        name: `tank ${ tank.loc.rack }${ tank.loc.row }${ tank.loc.col }`,
                     };
                     return {
                         tabs: tabs,

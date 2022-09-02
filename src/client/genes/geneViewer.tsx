@@ -1,4 +1,4 @@
-import { Td, Text, Textarea, Tr } from '@chakra-ui/react';
+import { Td, Text, Tr } from '@chakra-ui/react';
 import TabsViewer from '../bases/tabsViewer';
 import type { CellValue, Gene } from '../../server/database';
 import JumpController from '../jumpController';
@@ -45,11 +45,12 @@ class GeneViewer extends TabsViewer<Props, State> {
      */
     private saveUID(uid: string): void {
         this.setState((state: Readonly<State>): Readonly<State> => ({
-            gene: this.state.gene !== undefined ? {
+            gene: state.gene !== undefined ? {
                 uid: uid,
-                fields: this.state.gene.fields,
+                fields: state.gene.fields,
+                tanks: state.gene.tanks,
             } : undefined,
-            isEditing: this.state.isEditing,
+            isEditing: state.isEditing,
         }));
     }
 
@@ -78,6 +79,7 @@ class GeneViewer extends TabsViewer<Props, State> {
             const gene: Gene = {
                 uid: state.gene.uid,
                 fields: Array.from(state.gene.fields),
+                tanks: state.gene.tanks,
             }
             if(gene.fields[fieldNum] !== undefined) {
                 gene.fields[fieldNum].data = checkedData;
@@ -113,11 +115,23 @@ class GeneViewer extends TabsViewer<Props, State> {
      * Converts the Gene object's fields *other* than `fields` to JSX
      */
     protected override metadataToJSX(): JSX.Element[] {
+        if(this.state.gene === undefined) {
+            return [ <div>loading</div>, ];
+        }
+
         return [
             <Tr key='uid'>
                 <Td>UID</Td>
                 <Td>
-                    { this.state.gene?.uid }
+                    { this.state.gene.uid }
+                </Td>
+            </Tr>,
+            <Tr key='tanks'>
+                <Td>tanks</Td>
+                <Td>
+                    { this.props.jumpController.embedJumps(this.state.gene.tanks.map(
+                            (uid: number): string => `\\T${uid}` ).join('\n'))
+                    }
                 </Td>
             </Tr>,
         ];

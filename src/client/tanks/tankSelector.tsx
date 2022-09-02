@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, Stack, Text, Wrap } from '@chakra-ui/react';
+import { Button, SimpleGrid, Stack, Text, Wrap } from '@chakra-ui/react';
 import type { Location, Rack, Tank } from '../../server/database';
 
 type Props = {
@@ -61,14 +61,14 @@ class TankSelector extends React.Component<Props, State> {
                     this.state.currentRack !== undefined ?
                     <Stack>
                         <hr />
-                        <Wrap>
+                        <SimpleGrid columns={ this.state.racks[this.state.currentRack].size.width } spacing='10px'>
                             { this.state.racks[this.state.currentRack]?.tanks.map(
                                     (tank: Tank, i: number): JSX.Element => (
                                 <Button onClick={ (): void => { this.selectTank(tank.loc) } } key={ i }>
-                                    <h2>tank { `${ tank.loc.rack }${ tank.loc.row }${ tank.loc.col }` }</h2>
+                                    <h2>{ `${ tank.loc.rack }${ tank.loc.row }${ tank.loc.col }` }</h2>
                                 </Button>
                             ))}
-                        </Wrap>
+                        </SimpleGrid>
                     </Stack> :
                     <div />
                 }

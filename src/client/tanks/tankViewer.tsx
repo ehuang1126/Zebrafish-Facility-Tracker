@@ -61,11 +61,11 @@ class TankViewer extends TabsViewer<Props, State> {
      */
     private saveUID(uid: number): void {
         this.setState((state: Readonly<State>): Readonly<State> => ({
-            tank: this.state.tank !== undefined ? {
-                loc: this.state.tank.loc,
-                gene: this.state.tank.gene,
+            tank: state.tank !== undefined ? {
+                loc: state.tank.loc,
+                gene: state.tank.gene,
                 uid: uid,
-                fields: this.state.tank.fields,
+                fields: state.tank.fields,
             } : undefined,
             isEditing: this.state.isEditing,
         }));
@@ -83,11 +83,11 @@ class TankViewer extends TabsViewer<Props, State> {
      */
     private saveGene(gene: string): void {
         this.setState((state: Readonly<State>): Readonly<State> => ({
-            tank: this.state.tank !== undefined ? {
-                loc: this.state.tank.loc,
+            tank: state.tank !== undefined ? {
+                loc: state.tank.loc,
                 gene: gene,
-                uid: this.state.tank.uid,
-                fields: this.state.tank.fields,
+                uid: state.tank.uid,
+                fields: state.tank.fields,
             } : undefined,
             isEditing: this.state.isEditing,
         }));
@@ -151,11 +151,11 @@ class TankViewer extends TabsViewer<Props, State> {
                 };
                 this.setState((state: Readonly<State>): Readonly<State> => {
                     return {
-                        tank: this.state.tank !== undefined ? {
+                        tank: state.tank !== undefined ? {
                             loc: loc,
-                            gene: this.state.tank.gene,
-                            uid: this.state.tank.uid,
-                            fields: this.state.tank.fields,
+                            gene: state.tank.gene,
+                            uid: state.tank.uid,
+                            fields: state.tank.fields,
                         } : undefined,
                         isEditing: this.state.isEditing,
                     }

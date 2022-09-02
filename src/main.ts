@@ -7,8 +7,8 @@ import Database from './server/database.js';
  */
 function createWindow(): void {
     const mainWindow: BrowserWindow = new BrowserWindow({
-        width: 1200,
-        height: 800,
+        width: 1600,
+        height: 1200,
         frame: true,
         webPreferences: {
             nodeIntegration: true,
