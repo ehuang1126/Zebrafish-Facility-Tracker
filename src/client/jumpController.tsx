@@ -1,8 +1,11 @@
 import { Link, Text } from '@chakra-ui/react';
 import { ReactNode } from 'react';
 import View from "./view/view";
+import type { Location, Tank } from '../server/database';
 
-const CONTROL_SEQUENCES: RegExp = /(\\T.*\b|\\G.*\b)/;
+const CONTROL_SEQUENCES: RegExp = /(\\T.*?\b|\\G.*?\b)/;
+const TANK_SEQUENCE: RegExp = /(\\T.*?\b)/;
+const TANK_PIECES: RegExp = /^\\T(\d+),?(\w+),?(\d+)$/;
 
 class JumpController {
     private view: View;
@@ -95,6 +98,36 @@ class JumpController {
                 })
             } </Text>
         ));
+    }
+
+    /**
+     * Parses a string and converts any jump link control sequences based on a
+     * tank's location to the link based on the tank's uid
+     */
+    async convertLocationJumpLink(text: string): Promise<string> {
+        const pieces: string[] = await Promise.all(text.split(TANK_SEQUENCE).map(
+                async (match: string, i: number): Promise<string> => {
+            if(i % 2 !== 0) {
+                // convert the tank jump link sequence back to a location
+                const locStringPieces: (RegExpMatchArray | null) = match.match(TANK_PIECES);
+                if(locStringPieces !== null) {
+                    // if the locString was properly formatted
+                    const loc: Location = {
+                        rack: Number(locStringPieces[1]),
+                        row: locStringPieces[2].toString().toUpperCase(),
+                        col: Number(locStringPieces[3]),
+                    };
+                    
+                    // find the tank at that location
+                    const tank: (Tank | undefined) = await window.electronAPI.findTank(loc);
+                    return tank !== undefined ? ('\\T' + tank.uid.toString()) : match;
+                }
+            }
+            return match;
+        }));
+
+        // concatenate the pieces together with no joining character
+        return pieces.join('');
     }
 }
 

@@ -124,42 +124,74 @@ class TankViewer extends TabsViewer<Props, State> {
      * when toggling back from edit.
      */
     protected override toggleEdit(): void {
-        this.setState((state: Readonly<State>, props: Readonly<Props>): Readonly<State> => {
-            // deep-ish copy state
-            const newState: State = {
-                tank: state.tank !== undefined ? {
-                    loc: state.tank.loc,
-                    gene: state.tank.gene,
-                    uid: state.tank.uid,
-                    fields: Array.from(state.tank.fields),
-                } : undefined,
-                isEditing: state.isEditing,
-                locString: state.locString,
-            };
+        if(this.state.tank === undefined) {
+            return;
+        }
 
-            if (newState.isEditing && newState.tank !== undefined && newState.locString !== undefined) {
-                // convert `locString` back to a location
-                const locStringPieces: (RegExpMatchArray | null) = newState.locString.match(/^(\d+),?(\w+),?(\d+)$/);
-                if (locStringPieces !== null) {
-                    // if the locString was properly formatted
-                    const loc: Location = {
-                        rack: Number(locStringPieces[1]),
-                        row: locStringPieces[2].toString().toUpperCase(),
-                        col: Number(locStringPieces[3]),
-                    };
-                    newState.tank.loc = loc;
+        // TODO This improperly updates state without checking current state,
+        // but I don't think there's a way to do it right.
+        if(!this.state.isEditing) {
+            this.setState({isEditing: true,});
+            return;
+        }
+
+        // parses all the new fields for location-based jump links and collects
+        // the converted results
+        Promise.all(this.state.tank.fields.map((field: Field): Promise<string> => {
+            return this.props.jumpController.convertLocationJumpLink(field.data.toString());
+        })).then((fields: string[]): void => {
+            // TODO This improperly updates state without checking current state,
+            // but I don't think there's a way to do it right.
+            this.setState((state: Readonly<State>, props: Readonly<Props>): Readonly<State> => {
+                if(state.tank === undefined) {
+                    return state;
                 }
 
-                // write back to database
-                console.log('write');
-                window.electronAPI.writeTank(props.uid, newState.tank);
-            }
+                // deep-ish copy state
+                const newState: State = {
+                    tank: {
+                        loc: state.tank.loc,
+                        gene: state.tank.gene,
+                        uid: state.tank.uid,
+                        fields: [],
+                    },
+                    isEditing: !state.isEditing, // toggle editing
+                    locString: state.locString,
+                };
 
-            // toggle editing
-            newState.isEditing = !newState.isEditing;
+                // I don't know why this is necessary
+                if(newState.tank === undefined) {
+                    return state;
+                }
 
-            // check all the fields for location-based tank jump control sequences
-            return newState;
+                // update state with parsed data
+                for(let i = 0; i < fields.length; i++) {
+                    newState.tank.fields.push({
+                        label: state.tank.fields[i].label,
+                        data: fields[i],
+                    });
+                }
+
+                // read the location back into a Location object
+                if(newState.locString !== undefined) {
+                    // convert `locString` back to a location
+                    const locStringPieces: (RegExpMatchArray | null) = newState.locString.match(/^(\d+),?(\w+),?(\d+)$/);
+                    if (locStringPieces !== null) {
+                        // if the locString was properly formatted
+                        const loc: Location = {
+                            rack: Number(locStringPieces[1]),
+                            row: locStringPieces[2].toString().toUpperCase(),
+                            col: Number(locStringPieces[3]),
+                        };
+                        newState.tank.loc = loc;
+                    }
+
+                    // write back to database
+                    window.electronAPI.writeTank(props.uid, newState.tank);
+                }
+
+                return newState;
+            });
         });
     }
 
