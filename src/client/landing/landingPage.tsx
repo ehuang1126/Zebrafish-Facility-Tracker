@@ -17,8 +17,8 @@ class LandingPage extends React.Component<Props, State> {
                 <Box id='news-pane'>
                     { this.props.jumpController?.embedJumps(
                                 'This is where the news goes.\n' +
-                                'jump to \\T3\n' +
-                                'jump to \\G90'
+                                'jump to \\T9\n' +
+                                'jump to \\G93'
                         )
                     }
                 </Box>

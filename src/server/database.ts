@@ -3,9 +3,10 @@ import xlsx from 'xlsx';
 const RACK_NAME_PREFIX = 'rack_'; // each page that represents a rack starts with this
 const ROW_LABEL = 'row'; // the column header for the `row` column
 const COL_LABEL = 'column'; // the column header for the `col` column
-const GENOTYPE_ID_LABEL = 'genotypeID'; // the column header for the genotype id
-const UID_LABEL = 'ID-'; // the column header for the tank UIDs
+const TANK_GENOTYPE_LABEL = 'ID-'; // the column header for a Tank's genotype ID
+const UID_LABEL = 'sort'; // the column header for the tank UIDs
 const GENOTYPE_PAGE_NAME = 'gene_ID'; // the name of the page that has genotype data
+const GENOTYPE_ID_LABEL = 'genotypeID'; // the column header for a genotype's ID
 
 type CellValue = (string | number);
 
@@ -222,7 +223,7 @@ class Database {
                 tank.loc.row = data.toString();
             } else if(label === COL_LABEL && data !== undefined) {
                 tank.loc.col = Number(data);
-            } else if(label === GENOTYPE_ID_LABEL && data !== undefined) {
+            } else if(label === TANK_GENOTYPE_LABEL && data !== undefined) {
                 tank.genotype = data.toString();
             } else if(label === UID_LABEL) {
                 tank.uid = Number(data);
