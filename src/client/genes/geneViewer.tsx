@@ -1,6 +1,6 @@
 import { Td, Text, Tr } from '@chakra-ui/react';
 import TabsViewer from '../bases/tabsViewer';
-import type { CellValue, Gene } from '../../server/database';
+import type { CellValue, Field, Gene } from '../../server/database';
 import JumpController from '../jumpController';
 
 type Props = {
@@ -79,27 +79,60 @@ class GeneViewer extends TabsViewer<Props, State> {
     }
 
     /**
-     * This toggles between edit and view. Importantly, it also saves back to
-     * the database when toggling back from edit.
+     * This toggles between edit and view. Importantly, it also saves the Gene
+     * back to the database when toggling back from edit.
      */
     protected override toggleEdit(): void {
-        // send it back to the database
-        if(this.state.isEditing && this.state.gene !== undefined) {
-            window.electronAPI.writeGene(this.state.gene);
+        if(this.state.gene === undefined) {
+            return;
         }
 
-        this.setState((state: Readonly<State>): Readonly<State> => {
-            // send it back to the database
-            if(state.isEditing && state.gene !== undefined) {
-                window.electronAPI.writeGene(state.gene);
-            }
+        // TODO This improperly updates state without checking current state,
+        // but I don't think there's a way to do it right.
+        if(!this.state.isEditing) {
+            this.setState({isEditing: true,});
+            return;
+        }
 
-            // toggle editing
-            const newState: State = Object.assign({}, state);
-            newState.isEditing = !state.isEditing;
+        // parses all the new fields for location-based jump links and collects
+        // the converted results
+        Promise.all(this.state.gene.fields.map((field: Field): Promise<string> => {
+            return this.props.jumpController.convertLocationJumpLink(field.data.toString());
+        })).then((fields: string[]): void => {
+            // TODO This improperly updates state without checking current state,
+            // but I don't think there's a way to do it right.
+            this.setState((state: Readonly<State>, props: Readonly<Props>): Readonly<State> => {
+                if(state.gene === undefined) {
+                    return state;
+                }
 
-            return newState;
-        })
+                // deep-ish copy state
+                const newState: State = {
+                    gene: {
+                        uid: state.gene.uid,
+                        fields: [],
+                        tanks: state.gene.tanks,
+                    },
+                    isEditing: !state.isEditing, // toggle editing
+                };
+
+                // I don't know why this is necessary
+                newState.gene = newState.gene as Gene;
+
+                // update state with parsed data
+                for(let i = 0; i < fields.length; i++) {
+                    newState.gene.fields.push({
+                        label: state.gene.fields[i].label,
+                        data: fields[i],
+                    });
+                }
+
+                // write back to database
+                window.electronAPI.writeGene(newState.gene);
+
+                return newState;
+            });
+        });
     }
 
     /**

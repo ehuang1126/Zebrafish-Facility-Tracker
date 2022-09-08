@@ -160,9 +160,7 @@ class TankViewer extends TabsViewer<Props, State> {
                 };
 
                 // I don't know why this is necessary
-                if(newState.tank === undefined) {
-                    return state;
-                }
+                newState.tank = newState.tank as Tank;
 
                 // update state with parsed data
                 for(let i = 0; i < fields.length; i++) {
