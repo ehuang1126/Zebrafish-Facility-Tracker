@@ -1,11 +1,11 @@
 import xlsx from 'xlsx';
 
-const RACK_NAME_PREFIX = 'rack#';
-const ROW_LABEL = 'row';
-const COL_LABEL = 'col';
-const GENE_ID_LABEL = 'gene ID';
-const UID_LABEL = 'UID';
-const GENE_PAGE_NAME = 'genes';
+const RACK_NAME_PREFIX = 'rack_'; // each page that represents a rack starts with this
+const ROW_LABEL = 'row'; // the column header for the `row` column
+const COL_LABEL = 'column'; // the column header for the `col` column
+const GENOTYPE_ID_LABEL = 'genotypeID'; // the column header for the genotype id
+const UID_LABEL = 'ID-'; // the column header for the tank UIDs
+const GENOTYPE_PAGE_NAME = 'gene_ID'; // the name of the page that has genotype data
 
 type CellValue = (string | number);
 
@@ -17,7 +17,7 @@ type Field = {
 // A tank is an ordered array of label:data pairs.
 type Tank = {
     loc: Location,
-    gene: string,
+    genotype: string,
     uid: number,
     fields: Field[],
 };
@@ -31,13 +31,14 @@ type Rack = {
     tanks: Tank[],
 };
 
-type Gene = {
+type Genotype = {
     uid: string,
     fields: Field[],
     tanks: number[],
 };
 
 type Location = {
+    // TODO add a field for the room
     rack: number,
     row: string,
     // col is 1-indexed
@@ -47,8 +48,8 @@ type Location = {
 /**
  * This file exports a minimal database interface for use with the zebrafish
  * manager. The most important method here is `attachHandlers`, which takes an
- * `ipcMain` and attaches handlers for reading and writing Tanks and Genes to
- * and from the database.
+ * `ipcMain` and attaches handlers for reading and writing Tanks and Genotypes
+ * to and from the database.
  *
  * A Tank is an object with 'labels' and 'data' fields which are paired arrays
  * such that the i-th element in the 'labels' array is the label for the i-th
@@ -58,18 +59,17 @@ class Database {
     private filename: string;
     private racks: Rack[];
     private tanks: Map<number, Tank>; 
-    private genes: Map<string, Gene>;
+    private genotypes: Map<string, Genotype>;
 
     constructor(filename: string) {
         // load the database into memory
         this.filename = filename;
         const db: xlsx.WorkBook = xlsx.readFile(filename);
         
-        // be sure to load genes before tanks, so the tanks can populate the
-        // genes' indices
-        // load genes
-        const genePage: (xlsx.WorkSheet | undefined) = db.Sheets[GENE_PAGE_NAME];
-        this.genes = Database.sheetToGenes(genePage);
+        // be sure to load genotypes before tanks, so the tanks can populate the
+        // genotypes' indices
+        const genotypePage: (xlsx.WorkSheet | undefined) = db.Sheets[GENOTYPE_PAGE_NAME];
+        this.genotypes = Database.sheetToGenotypes(genotypePage);
 
         // create a list of all the racks
         this.racks = [];
@@ -78,14 +78,14 @@ class Database {
         )).forEach((name: string): void => {
             const rackNum: number = Number(name.substring(RACK_NAME_PREFIX.length));
             this.racks[rackNum - 1] = Database.sheetToRack(db, rackNum);
-        })
-    
+        });
+
         // store all the tanks into a map from UID to tank
         this.tanks = new Map<number, Tank>();
         this.racks.forEach((rack: Rack): void => {
             rack.tanks.forEach((tank: Tank): void => {
                 this.tanks.set(tank.uid, tank);
-                this.genes.get(tank.gene)?.tanks.push(tank.uid);
+                this.genotypes.get(tank.genotype)?.tanks.push(tank.uid);
             });
         });
     }
@@ -110,19 +110,19 @@ class Database {
     }
 
     /**
-     * Returns a Gene object representing the gene in the given position with
-     * fields populated from the database.
+     * Returns a Genotype object representing the genotype in the given position
+     * with fields populated from the database.
      */
-    readGene(uid: string): (Gene | undefined) {
-        return this.genes.get(uid);
+    readGenotype(uid: string): (Genotype | undefined) {
+        return this.genotypes.get(uid);
     }
 
     /**
-     * Writes a Gene object to the database, reading data from the object's
+     * Writes a Genotype object to the database, reading data from the object's
      * fields.
      */
-    writeGene(gene: Gene): void {
-        this.genes.set(gene.uid, gene);
+    writeGenotype(genotype: Genotype): void {
+        this.genotypes.set(genotype.uid, genotype);
     }
 
     /**
@@ -139,8 +139,8 @@ class Database {
         return this.racks;
     }
 
-    getGenes(): Map<string, Gene> {
-        return this.genes;
+    getGenotypes(): Map<string, Genotype> {
+        return this.genotypes;
     }
 
     /**
@@ -149,11 +149,11 @@ class Database {
     attachHandlers(ipcMain: Electron.IpcMain): void {
         ipcMain.handle('db:readTank',  (event, uid: number): (Tank | undefined) => this.readTank(uid));
         ipcMain.handle('db:writeTank', (event, uid: number, tank: Tank): void => this.writeTank(uid, tank));
-        ipcMain.handle('db:readGene',  (event, uid: string): (Gene | undefined) => this.readGene(uid));
-        ipcMain.handle('db:writeGene', (event, gene: Gene): void => this.writeGene(gene));
+        ipcMain.handle('db:readGenotype',  (event, uid: string): (Genotype | undefined) => this.readGenotype(uid));
+        ipcMain.handle('db:writeGenotype', (event, genotype: Genotype): void => this.writeGenotype(genotype));
         ipcMain.handle('db:findTank',  (event, loc: Location): (Tank | undefined) => this.findTank(loc));
         ipcMain.handle('db:getRacks', (event): Rack[] => this.getRacks());
-        ipcMain.handle('db:getGenes', (event): Map<string, Gene> => this.getGenes());
+        ipcMain.handle('db:getGenotypes', (event): Map<string, Genotype> => this.getGenotypes());
     }
 
     /**
@@ -174,7 +174,7 @@ class Database {
         // populate the rack from the sheet
         for(let rowNum = 1; rowNum < 1 + rowsOfData; rowNum++) {
             const tank: Tank = Database.rowToTank(rackNum, sheet, rowNum);
-            const locationHash = Database.hashLocation(rack.size.width, tank.loc);
+            const locationHash: number = Database.hashLocation(rack.size.width, tank.loc);
             if(locationHash >= 0) {
                 // TODO change this condition to check whether any data at all is in the row
                 rack.tanks[locationHash] = tank;
@@ -208,7 +208,7 @@ class Database {
                 row: '!',
                 col: -1,
             },
-            gene: '!',
+            genotype: '!',
             uid: -1,
             fields: [],
         };
@@ -222,8 +222,8 @@ class Database {
                 tank.loc.row = data.toString();
             } else if(label === COL_LABEL && data !== undefined) {
                 tank.loc.col = Number(data);
-            } else if(label === GENE_ID_LABEL && data !== undefined) {
-                tank.gene = data.toString();
+            } else if(label === GENOTYPE_ID_LABEL && data !== undefined) {
+                tank.genotype = data.toString();
             } else if(label === UID_LABEL) {
                 tank.uid = Number(data);
             } else {
@@ -255,10 +255,11 @@ class Database {
     }
 
     /**
-     * reads a sheet and converts it to a map from gene IDs to Gene objects
+     * reads a sheet and converts it to a map from genotype IDs to Genotype
+     * objects
      */
-    private static sheetToGenes(sheet: xlsx.WorkSheet): Map<string, Gene> {
-        const genes = new Map<string, Gene>();
+    private static sheetToGenotypes(sheet: xlsx.WorkSheet): Map<string, Genotype> {
+        const genotypes = new Map<string, Genotype>();
         const sheetShape: (xlsx.Range | undefined) = sheet['!ref'] !== undefined ?
                 xlsx.utils.decode_range(sheet['!ref']) :
                 undefined;
@@ -267,7 +268,7 @@ class Database {
         
         // parse the sheet
         for(let r = 1; r < numRows; r++) {
-            const gene: Gene = {
+            const genotype: Genotype = {
                 uid: '!',
                 fields: [],
                 tanks: [],
@@ -278,22 +279,22 @@ class Database {
                 const label: (CellValue | undefined) = sheet[ xlsx.utils.encode_cell({ r: 0, c: c, }) ]?.w;
                 const data: (CellValue | undefined) = sheet[ xlsx.utils.encode_cell({ r: r, c: c, }) ]?.w;
 
-                if(label === GENE_ID_LABEL && data !== undefined) {
-                    gene.uid = data.toString();
+                if(label === GENOTYPE_ID_LABEL && data !== undefined) {
+                    genotype.uid = data.toString();
                 } else {
-                    gene.fields.push({
+                    genotype.fields.push({
                         label: label ?? '',
                         data: data ?? '',
                     });
                 }
             }
 
-            if(gene.uid !== '!') {
-                genes.set(gene.uid, gene);
+            if(genotype.uid !== '!') {
+                genotypes.set(genotype.uid, genotype);
             }
         }
 
-        return genes;
+        return genotypes;
     }
 }
 
@@ -302,7 +303,7 @@ export type {
     CellValue,
     Field,
     Tank,
-    Gene,
+    Genotype,
     Location,
     Rack,
 };

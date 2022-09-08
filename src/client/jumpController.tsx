@@ -10,12 +10,12 @@ const TANK_PIECES: RegExp = /^\\T(\d+),?(\w+),?(\d+)$/;
 class JumpController {
     private view: View;
     private tankJumpHandler?: (uid: number) => void;
-    private geneJumpHandler?: (uid: string) => void;
+    private genotypeJumpHandler?: (uid: string) => void;
 
     constructor(view: View) {
         this.view = view;
         this.tankJumpHandler = undefined;
-        this.geneJumpHandler = undefined;
+        this.genotypeJumpHandler = undefined;
     }
 
     /**
@@ -38,21 +38,21 @@ class JumpController {
     }
 
     /**
-     * Registers a handler for a 'jump to Gene' event.
+     * Registers a handler for a 'jump to Genotype' event.
      */
-    registerGeneJumpHandler(handler: (uid: string) => void): void {
-        this.geneJumpHandler = (uid: string): void => {
+    registerGenotypeJumpHandler(handler: (uid: string) => void): void {
+        this.genotypeJumpHandler = (uid: string): void => {
             this.view.setState({ currentTab: 2, });
             handler(uid);
         };
     }
 
     /**
-     * Jumps to a certain gene page.
+     * Jumps to a certain genotype page.
      */
-    jumpToGene(uid: string): void {
-        if(this.geneJumpHandler !== undefined) {
-            this.geneJumpHandler(uid);
+    jumpToGenotype(uid: string): void {
+        if(this.genotypeJumpHandler !== undefined) {
+            this.genotypeJumpHandler(uid);
         }
     }
 
@@ -80,20 +80,20 @@ class JumpController {
                                 </Link>
                             );
                         } else if(match.charAt(1) === 'G') {
-                            // gene jump link
+                            // genotype jump link
                             return (
                                 <Link key={ j } onClick={ (): void => {
-                                    this.jumpToGene(match.substring(2));
+                                    this.jumpToGenotype(match.substring(2));
                                 } }>
                                     <u>
-                                        gene id#{ match.substring(2) }
+                                        genotype id#{ match.substring(2) }
                                     </u>
                                 </Link>
                             );
                         }
                     }
                     
-                    // if it didn't match a tank or gene jump for some reason, just return the regular text
+                    // if it didn't match a tank or genotype jump for some reason, just return the regular text
                     return match;
                 })
             } </Text>

@@ -2,7 +2,7 @@ import React from 'react';
 import { Tabs, TabList, TabPanels, Tab, TabPanel } from '@chakra-ui/react';
 import LandingPage from '../landing/landingPage';
 import TanksPage from '../tanks/tanksPage';
-import GenesPage from '../genes/genesPage';
+import GenotypesPage from '../genotype/genotypesPage';
 import JumpController from '../jumpController';
 
 import './view.css';
@@ -39,9 +39,9 @@ class View extends React.Component<Props, State> {
             <Tabs id='view' isFitted size='lg'
                     index={ this.state.currentTab } onChange={ this.selectTab.bind(this) }>
                 <TabList>
-                    <Tab key='front'>front page</Tab>
-                    <Tab key='tanks'>tanks page</Tab>
-                    <Tab key='genes'>genes page</Tab>
+                    <Tab key='news'>news</Tab>
+                    <Tab key='tanks'>tanks</Tab>
+                    <Tab key='genotypes'>genotypes</Tab>
                 </TabList>
 
                 <TabPanels>
@@ -51,8 +51,8 @@ class View extends React.Component<Props, State> {
                     <TabPanel key='tanks'>
                         <TanksPage jumpController={ this.state?.jumpController }/>
                     </TabPanel>
-                    <TabPanel key='genes'>
-                        <GenesPage jumpController={ this.state?.jumpController }/>
+                    <TabPanel key='genotypes'>
+                        <GenotypesPage jumpController={ this.state?.jumpController }/>
                     </TabPanel>
                 </TabPanels>
             </Tabs>

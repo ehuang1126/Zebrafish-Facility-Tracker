@@ -21,8 +21,8 @@ type State = {
 
 /**
  * This class is an interface for pages that use tabs and have selectors, such
- * as the tanks and gene pages. Implementing classes should override `jumpToID`
- * and `renderTabContent`.
+ * as the tanks and genotype pages. Implementing classes should override
+ * `jumpToID` and `renderTabContent`.
  */
 abstract class TabsPage extends React.Component<Props, State> {
     constructor(props: Readonly<Props>) {

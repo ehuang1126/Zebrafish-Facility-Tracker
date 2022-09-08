@@ -22,7 +22,7 @@ function createWindow(): void {
 
 // run once initialized
 app.whenReady().then((): void => {
-    new Database(path.join(__dirname, '..', 'data', 'test-data.xlsx')).attachHandlers(ipcMain);
+    new Database(path.join(__dirname, '..', 'data', 'sample_input.xlsx')).attachHandlers(ipcMain);
 
     createWindow();
 

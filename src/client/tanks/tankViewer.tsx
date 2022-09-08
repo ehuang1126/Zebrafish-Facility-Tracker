@@ -64,13 +64,13 @@ class TankViewer extends TabsViewer<Props, State> {
     }
 
     /**
-     * Saves the new gene UID into the current state.
+     * Saves the new genotype UID into the current state.
      */
-    private saveGene(gene: string): void {
+    private sageGenotype(genotype: string): void {
         this.setState((state: Readonly<State>): Readonly<State> => ({
             tank: state.tank !== undefined ? {
                 loc: state.tank.loc,
-                gene: gene,
+                genotype: genotype,
                 uid: state.tank.uid,
                 fields: state.tank.fields,
             } : undefined,
@@ -102,7 +102,7 @@ class TankViewer extends TabsViewer<Props, State> {
 
             const tank: Tank = {
                 loc: state.tank.loc,
-                gene: state.tank.gene,
+                genotype: state.tank.genotype,
                 uid: state.tank.uid,
                 fields: Array.from(state.tank.fields),
             }
@@ -151,7 +151,7 @@ class TankViewer extends TabsViewer<Props, State> {
                 const newState: State = {
                     tank: {
                         loc: state.tank.loc,
-                        gene: state.tank.gene,
+                        genotype: state.tank.genotype,
                         uid: state.tank.uid,
                         fields: [],
                     },
@@ -215,15 +215,15 @@ class TankViewer extends TabsViewer<Props, State> {
                     }
                 </Td>
             </Tr>,
-            <Tr key='gene'>
-                <Td>gene ID</Td>
+            <Tr key='genotype'>
+                <Td>genotype ID</Td>
                 <Td>
                     { this.state.isEditing ?
-                        <Textarea value={ this.state.tank?.gene } rows={ 1 }
-                                onChange={ (e): void => this.saveGene(e.target.value) }
+                        <Textarea value={ this.state.tank?.genotype } rows={ 1 }
+                                onChange={ (e): void => this.sageGenotype(e.target.value) }
                         /> :
-                        this.state.tank?.gene !== undefined ?
-                                this.props.jumpController.embedJumps('\\G' + this.state.tank.gene) :
+                        this.state.tank?.genotype !== undefined ?
+                                this.props.jumpController.embedJumps('\\G' + this.state.tank.genotype) :
                                 undefined
                     }
                 </Td>

@@ -29,7 +29,7 @@ abstract class TabsViewer<P, S> extends React.Component<(P & Props), S> {
     protected abstract toggleEdit(): void;
 
     /**
-     * Converts the fields of the Tank or Gene that are not in `fields` into
+     * Converts the fields of the Tank or Genotype that are not in `fields` into
      * table rows.
      */
     protected abstract metadataToJSX(): JSX.Element[];
