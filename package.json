@@ -32,9 +32,11 @@
     "react": "react-scripts start",
     "electron": "electron .",
     "kill": "fuser -k 3000/tcp",
+
     "prestart": "npm run build && (BROWSER=none npm run react &)",
     "start": "sleep 3 && npm run electron",
     "poststart": "npm run kill",
+
     "test": "react-scripts test"
   },
   "eslintConfig": {
