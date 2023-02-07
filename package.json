@@ -20,12 +20,15 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-scripts": "5.0.1",
+    "run-script-os": "^1.1.6",
     "typescript": "^4.8.2",
     "web-vitals": "^2.1.4",
     "xlsx": "^0.18.5"
   },
   "scripts": {
-    "build": "rm -r dist/ && ./node_modules/.bin/tsc && cd src && find -name '*.css' -exec cp --parents {} ../dist/ \\; && cd ..",
+    "build": "run-script-os",
+    "build:linux": "rm -r dist/ && ./node_modules/.bin/tsc && cd src && find -name '*.css' -exec cp --parents {} ../dist/ \\; && cd ..",
+    "build:darwin:linux": "rm -rf dist/ && ./node_modules/.bin/tsc && cd src && find . -name '*.css' -exec ditto {} ../dist/ \\; && cd ..",
     "react": "react-scripts start",
     "electron": "electron .",
     "kill": "fuser -k 3000/tcp",
