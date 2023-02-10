@@ -50,12 +50,14 @@ class TankSelector extends React.Component<Props, State> {
         return (
             <Stack>
                 <Wrap>
-                    { this.state.racks.map((rack: Rack, i: number): JSX.Element => (
-                        <Button key={ i } isActive={ this.state.currentRack === i }
-                                onClick={ (): void => { this.selectRack(i) }}>
-                            <h2>rack { rack.rackNum }</h2>
-                        </Button>
-                    )) }
+                    { this.state.racks.map((rack: Rack, i: number): (JSX.Element | undefined) => (
+                        rack !== undefined ?
+                            <Button key={ i } isActive={ this.state.currentRack === i }
+                                    onClick={ (): void => { this.selectRack(i) }}>
+                                <h2>rack { rack.rackNum }</h2>
+                            </Button> :
+                            undefined
+                    )).filter((element: (JSX.Element | undefined)): boolean => (element !== undefined)) }
                 </Wrap>
                 {
                     this.state.currentRack !== undefined ?
