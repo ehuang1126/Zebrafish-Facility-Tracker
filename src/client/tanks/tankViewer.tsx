@@ -66,7 +66,7 @@ class TankViewer extends TabsViewer<Props, State> {
     /**
      * Saves the new genotype UID into the current state.
      */
-    private sageGenotype(genotype: string): void {
+    private saveGenotype(genotype: string): void {
         this.setState((state: Readonly<State>): Readonly<State> => ({
             tank: state.tank !== undefined ? {
                 loc: state.tank.loc,
@@ -220,7 +220,7 @@ class TankViewer extends TabsViewer<Props, State> {
                 <Td>
                     { this.state.isEditing ?
                         <Textarea value={ this.state.tank?.genotype } rows={ 1 }
-                                onChange={ (e): void => this.sageGenotype(e.target.value) }
+                                onChange={ (e): void => this.saveGenotype(e.target.value) }
                         /> :
                         this.state.tank?.genotype !== undefined ?
                                 this.props.jumpController.embedJumps('\\G' + this.state.tank.genotype) :

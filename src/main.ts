@@ -1,6 +1,6 @@
 import { app, BrowserWindow, ipcMain } from 'electron';
 import path from 'path';
-import Database from './server/database.js';
+import XLSXDatabase from './server/xlsxDatabase.js';
 
 /**
  * Creates a new window and attaches it to the React process.
@@ -22,7 +22,7 @@ function createWindow(): void {
 
 // run once initialized
 app.whenReady().then((): void => {
-    new Database(path.join(__dirname, '..', 'data', 'sample_input.xlsx')).attachHandlers(ipcMain);
+    new XLSXDatabase(path.join(__dirname, '..', 'data', 'sample_input.xlsx')).attachHandlers(ipcMain);
 
     createWindow();
 
