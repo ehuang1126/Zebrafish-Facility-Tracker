@@ -1,21 +1,40 @@
 import TabsPage from '../bases/tabsPage';
+import type { Props, State, TabState } from '../bases/tabsPage';
 import type { Genotype, CellValue } from '../../server/database';
-import GenotypeViewer from './genotypeViewer';
 import GenotypeSelector from './genotypeSelector';
-import XLSXDatabase from '../../server/xlsxDatabase';
+import GenotypeViewer from './genotypeViewer';
+import GenotypesPage from './genotypesPage';
 
-const upperLim: number = 10000000;
+const upperLim: number = 50; // default value for the max number of generations to display
 
-class genotypeFamilyTreePage extends TabsPage {
+class genotypeFamilyTreePage extends GenotypesPage {
+    constructor(props: Readonly<Props>) {
+        super(props);
+        this.props.jumpController.registerGenotypeJumpHandler(this.jumpToID.bind(this));
+    }
     
     override jumpToID(uid: string | number): void {
-        throw new Error('Method not implemented.');
+        this.newTab();
+        this.selectGenotype(this.state.currentTab)(uid.toString());
     }
+
     protected override renderTabContent(tabNum: number): JSX.Element {
-        throw new Error('Method not implemented.');
+        // TODO: figure this out
+        if(this.state.tabs[tabNum] === undefined) {
+            return <div />
+        }
+
+        /*
+        if(this.state.tabs[tabNum].contentSelected) {
+            return <GenotypeViewer uid={ this.state.tabs[tabNum].contentID.toString() } jumpController={ this.props.jumpController } />
+        } else {
+            return <GenotypeSelector reportGenotype={ this.selectGenotype(tabNum) } />
+        }*/
     }
+
     
     public displayLine(genotype: Genotype, width: number, numParentGens: number = upperLim, numChildGens: number = upperLim): void {
+        
         // TODO: the number parameters should all be optional
         let genotypesMap = new Map<string, Genotype>; // TODO: access from database
         this.displayParentLine(genotype, numParentGens, genotypesMap);
@@ -32,12 +51,12 @@ class genotypeFamilyTreePage extends TabsPage {
         let motherID: CellValue = '';
         let fatherID: CellValue = '';
         let i: number = 0;
-        while (i < genotype.fields.length) {
-            if (genotype.fields[i].label == "mother") {
+        while(i < genotype.fields.length) {
+            if(genotype.fields[i].label == "mother") {
                 motherID = genotype.fields[i].data;
                 continue;
             }
-            if (genotype.fields[i].label == "father") {
+            if(genotype.fields[i].label == "father") {
                 fatherID = genotype.fields[i].data;
                 continue;
             }
@@ -59,8 +78,9 @@ class genotypeFamilyTreePage extends TabsPage {
         // base cases: AB, RNF (end of family line) or numGenerations == 0 or already displayed 
         // TODO: check already displayed condition and consider using generation number
         // TODO: numGenerations should be optional
-        if (genotype.uid == 'AB' || genotype.uid == 'RNF' || numGenerations == 0 || this.displayedParents.includes(genotype)) { 
+        if(genotype.uid == 'AB' || genotype.uid == 'RNF' || numGenerations == 0 || this.displayedParents.includes(genotype)) { 
             genotypeFamilyTreePage.displayGenotype(genotype);
+            return;
         }
         let parents: Genotype[] = genotypeFamilyTreePage.getParents(genotype, genotypesMap);
 
@@ -83,13 +103,13 @@ class genotypeFamilyTreePage extends TabsPage {
     private static getChildren(genotype: Genotype, genotypesMap: Map<string, Genotype>, maxToDisplay: number): Genotype[] {
         let result: Genotype[] = [];
         let counter: number = 0;
-        for (let entry of Array.from(genotypesMap.entries())) {
+        for(let entry of Array.from(genotypesMap.entries())) {
             let parents: Genotype[] = genotypeFamilyTreePage.getParents(entry[1], genotypesMap);
-            if (parents[0].uid == genotype.uid || parents[1].uid == genotype.uid) {
+            if(parents[0].uid == genotype.uid || parents[1].uid == genotype.uid) {
                 result.push(entry[1]);
                 counter++;
             }
-            if (typeof maxToDisplay !== undefined) {
+            if(typeof maxToDisplay !== undefined) {
                 if (counter >= maxToDisplay) break;
             } 
         }
@@ -103,8 +123,8 @@ class genotypeFamilyTreePage extends TabsPage {
     private static getSiblings(genotype: Genotype, genotypesMap: Map<string, Genotype>, width: number): Genotype[] {
         let result: Genotype[] = [];
         let counter: number = 0;
-        for (let entry of Array.from(genotypesMap.entries())) {
-            for (let i = 0; i < entry[1].fields.length; i++) {
+        for(let entry of Array.from(genotypesMap.entries())) {
+            for(let i = 0; i < entry[1].fields.length; i++) {
                 // TODO: this is wrong probably, will depend on implementation
                 if (entry[1].fields[i].label == 'siblings') {
                     result.push(entry[1]);
@@ -119,10 +139,10 @@ class genotypeFamilyTreePage extends TabsPage {
 
 
     /**
-     * Displays the genotype. For now, just log to console.
+     * Displays the genotype. For now, just log to console. 
      */
     private static displayGenotype(genotype: Genotype): void {
-        console.log(genotype.uid);
+        console.log(genotype.uid + " ");
     }   
 
 }
