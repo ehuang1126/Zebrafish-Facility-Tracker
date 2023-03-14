@@ -1,35 +1,44 @@
+import { Td, Text, Tr } from '@chakra-ui/react';
 import type { Genotype, CellValue } from '../../server/database';
 import GenotypeViewer from './genotypeViewer';
 
 
-const upperLim: number = 50; // default value for the max number of generations to display
+const upperLim: number = 50; // default value for the max number to recurse through
 
 class genotypeFamilyTreePage {
     private baseGenotype: Genotype;
     private genotypesMap: Map<string, Genotype>;
     private element: JSX.Element;
+    private line: string; // temp for now just to display and to test
 
     private constructor(gv: GenotypeViewer, uid: string, width: number = upperLim, numParentGens: number = upperLim, numChildGens: number = upperLim) {
         this.baseGenotype = gv.getGenotype() as Genotype;
-        this.genotypesMap = new Map<string, Genotype>(); // TODO: figure out getting map
+        this.genotypesMap = gv.getAllGenotypes() as Map<string, Genotype>;
         this.element = <></>; // TODO: initialize element?
+        this.line = '';
     }
 
-    public static generateJSX(gv: GenotypeViewer, uid: number | string, width: number = upperLim, numParentGens: number = upperLim, numChildGens: number = upperLim): JSX.Element {
+    public static generateJSX(gv: GenotypeViewer, uid: number | string, width: number = upperLim, numParentGens: number = upperLim, numChildGens: number = upperLim): JSX.Element | string {
         let gftp: genotypeFamilyTreePage = new genotypeFamilyTreePage(gv, uid.toString(), width, numParentGens, numChildGens);
-        // TODO: actually call functions
-        return gftp.element;
+        gftp.displayLine(width, numParentGens, numChildGens);
+        return gftp.line;
+        //return gftp.element;
     }
 
-    // TODO: change args to take in uid? and remove unnecessary args. 
-    private displayLine(width: number, numParentGens: number = upperLim, numChildGens: number = upperLim): void {
+    private displayLine(width: number = upperLim, numParentGens: number = upperLim, numChildGens: number = upperLim, numChildrenPerGens: number = upperLim): void {
         
+        this.line = this.getParents(this.baseGenotype)[0].uid;
+        // this.displayParentLine(this.baseGenotype, numParentGens);
+        // this.displayChildrenLines(this.baseGenotype, numChildGens, numChildrenPerGens);
 
-        this.displayParentLine(this.baseGenotype, numParentGens);
-        let siblings: Genotype[] = this.getSiblings(this.baseGenotype, width);
-        // TODO: deal with siblings and children
-        let children: Genotype[] = this.getChildren(this.baseGenotype, numChildGens);
 
+        // TODO: deal with siblings and children (must wait on siblings implementation)
+        /*let siblings: Genotype[] = this.getSiblings(this.baseGenotype, width);
+        for(let sibling of siblings) {
+            this.displayGenotype(sibling);
+            this.displayChildrenLines(sibling, numChildGens, numChildrenPerGens);
+        }*/
+        
     }
 
     /**
@@ -39,19 +48,16 @@ class genotypeFamilyTreePage {
         let parents : Genotype[] = new Array(2); 
         let motherID: CellValue = '';
         let fatherID: CellValue = '';
-        let i: number = 0;
-        while(i < genotype.fields.length) {
-            if(genotype.fields[i].label == "mother") {
-                motherID = genotype.fields[i].data;
-                continue;
+
+        for(let field of genotype.fields) {
+            if(field.label == "mother") {
+                motherID = field.data;
+            } else if(field.label == "father") {
+                fatherID = field.data;
             }
-            if(genotype.fields[i].label == "father") {
-                fatherID = genotype.fields[i].data;
-                continue;
-            }
-            i++;
         }
         // TODO: add error check here
+        // TODO: check for AB and RNF
         // will be either "AB", "RNF", or "gID-{x}", also check for None
         
         parents[0] = this.genotypesMap.get(motherID as string) as Genotype;
@@ -150,7 +156,9 @@ class genotypeFamilyTreePage {
      */
     private displayGenotype(genotype: Genotype): void {
         console.log(genotype.uid + " ");
+        this.line += genotype.uid + " ";
         // TODO: add genotype to the element
+
     }   
 
 }

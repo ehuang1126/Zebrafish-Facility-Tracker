@@ -2,6 +2,7 @@ import { Td, Text, Tr } from '@chakra-ui/react';
 import TabsViewer from '../bases/tabsViewer';
 import type { CellValue, Field, Genotype } from '../../server/database';
 import JumpController from '../jumpController';
+import genotypeFamilyTreePage from './genotypeFamilyTreePage';
 
 type Props = {
     uid: string,
@@ -10,6 +11,7 @@ type Props = {
 
 type State = {
     genotype?: Genotype,
+    genotypesMap?: Map<string, Genotype>;
     isEditing: boolean,
 };
 
@@ -30,12 +32,20 @@ class GenotypeViewer extends TabsViewer<Props, State> {
     }
 
     /**
+     * Returns the map of all genotypes.
+     */
+    getAllGenotypes(): (Map<string, Genotype> | undefined) {
+        return this.state.genotypesMap;
+    }
+
+    /**
      * Actually loads the Tank data from the database.
      */
     override componentDidMount() {
         (async (): Promise<void> => {
             this.setState({
                 genotype: await window.electronAPI.readGenotype(this.props.uid),
+                genotypesMap: await window.electronAPI.getGenotypes()
             });
         })();
     }
@@ -156,6 +166,12 @@ class GenotypeViewer extends TabsViewer<Props, State> {
                     { this.props.jumpController.embedJumps(this.state.genotype.tanks.map(
                             (uid: number): string => `\\T${uid}` ).join('\n'))
                     }
+                </Td>
+            </Tr>,
+            <Tr key='line'>
+                <Td>family tree</Td>
+                <Td>
+                    { genotypeFamilyTreePage(this, this.state.genotype.uid, 2, 1, 1) }
                 </Td>
             </Tr>,
         ];
