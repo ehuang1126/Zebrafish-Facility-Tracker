@@ -171,7 +171,7 @@ class GenotypeViewer extends TabsViewer<Props, State> {
             <Tr key='line'>
                 <Td>family tree</Td>
                 <Td>
-                    { genotypeFamilyTreePage(this, this.state.genotype.uid, 2, 1, 1) }
+                    { genotypeFamilyTreePage(this, this.state.genotype.uid, 2, 5, 1) }
                 </Td>
             </Tr>,
         ];
