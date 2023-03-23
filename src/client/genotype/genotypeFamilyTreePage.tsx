@@ -1,4 +1,6 @@
-import { Td, Text, Tr } from '@chakra-ui/react';
+import { ReactNode } from 'react';
+import ReactFamilyTree from 'react-family-tree';
+import { ExtNode } from 'relatives-tree/lib/types';
 import type { Genotype, CellValue } from '../../server/database';
 import GenotypeViewer from './genotypeViewer';
 
@@ -20,12 +22,15 @@ class genotypeFamilyTreePage {
 
     public static generateJSX(gv: GenotypeViewer, uid: number | string, width: number = upperLim, numParentGens: number = upperLim, numChildGens: number = upperLim): JSX.Element | string {
         let gftp: genotypeFamilyTreePage = new genotypeFamilyTreePage(gv, uid.toString(), width, numParentGens, numChildGens);
-        gftp.displayLine(width, numParentGens, numChildGens);
+        gftp.displayLine(numParentGens, numChildGens, width);
         //return gftp.line;
-        return (<div>{gftp.element}</div>);
+        return (<div>{gftp.element}
+            <ReactFamilyTree nodes={[]} rootId={''} width={0} height={0} renderNode={function (node: ExtNode): ReactNode {
+                throw new Error('Function not implemented.');
+        } }></ReactFamilyTree></div>);
     }
 
-    private displayLine(width: number = upperLim, numParentGens: number = upperLim, numChildGens: number = upperLim, numChildrenPerGens: number = upperLim): void {
+    private displayLine(numParentGens: number = upperLim, numChildGens: number = upperLim, numChildrenPerGens: number = upperLim): void {
         this.displayGenotype(this.baseGenotype);
         this.line += "PARENTS: "
         this.element.push(<div>PARENTS</div>)
@@ -55,8 +60,8 @@ class genotypeFamilyTreePage {
         let fatherID: CellValue = '';
         
         for(let field of genotype.fields) {
-            if(field.label == "mother") {
-                if (field.data == "AB" || field.data == "RNF") { // no longer necessary
+            if(field.label === "mother") {
+                if (field.data === "AB" || field.data === "RNF") { // no longer necessary?
                     parents[0] = {
                         uid: field.data,
                         fields: [],
@@ -66,8 +71,8 @@ class genotypeFamilyTreePage {
                     motherID = field.data.toString().split('-')[1] as string;
                     parents[0] = this.genotypesMap.get(motherID) as Genotype;
                 }
-            } else if(field.label == "father") {
-                if (field.data == "AB" || field.data == "RNF") { // no longer necessary
+            } else if(field.label === "father") {
+                if (field.data === "AB" || field.data === "RNF") { // no longer necessary?
                     parents[1] = {
                         uid: field.data,
                         fields: [],
@@ -96,12 +101,12 @@ class genotypeFamilyTreePage {
         // TODO: check already displayed condition and consider using generation number
         // TODO: numGenerations should be optional
         
-        if(genotype.uid == 'AB' || genotype.uid == 'RNF' || numGenerations <= 0 || this.displayedParents.includes(genotype)) { 
+        if(genotype.uid === 'AB' || genotype.uid === 'RNF' || numGenerations <= 0 || this.displayedParents.includes(genotype)) { 
             return;
         }
         
         let parents: Genotype[] = this.getParents(genotype);
-        if(parents[0] == undefined || parents[1] == undefined) { // will bypass any parents with undefined formats
+        if(parents[0] === undefined || parents[1] === undefined) { // will bypass any parents with undefined formats
             return;
         }
 
@@ -120,18 +125,18 @@ class genotypeFamilyTreePage {
     private displayedChildren: Genotype[] = []; // TODO: need to consider how to check if children (and parents) are the same and if to link
     private displayChildrenLines(genotype: Genotype, numGenerations: number, maxPerGeneration: number): void {
         const children: Genotype[] = this.getChildren(genotype, maxPerGeneration);
-        if(genotype.uid == 'AB' || genotype.uid == 'RNF' || numGenerations <= 0 || this.displayedChildren.includes(genotype) || children.length <= 0) { 
+        if(genotype.uid === 'AB' || genotype.uid === 'RNF' || numGenerations <= 0 || this.displayedChildren.includes(genotype) || children.length <= 0) { 
             return;
         }
 
 
         for(let child of children) {
-            this.displayedChildren.push(child);
             this.displayGenotype(child)
         }
         
         for(let child of children) {
             this.displayChildrenLines(child, numGenerations-1, maxPerGeneration);
+            this.displayedChildren.push(child);
         }
     }
 
@@ -143,10 +148,10 @@ class genotypeFamilyTreePage {
         let counter: number = 0;
         for(let entry of Array.from(this.genotypesMap.entries())) {
             let parents: Genotype[] = this.getParents(entry[1]);
-            if(parents[0] == undefined || parents[1] == undefined) { // bypass undefined parents
+            if(parents[0] === undefined || parents[1] === undefined) { // bypass undefined parents
                 continue;
             }
-            if(parents[0].uid == genotype.uid || parents[1].uid == genotype.uid) {
+            if(parents[0].uid === genotype.uid || parents[1].uid === genotype.uid) {
                 result.push(entry[1]);
                 counter++;
             }
@@ -165,7 +170,7 @@ class genotypeFamilyTreePage {
         for(let entry of Array.from(this.genotypesMap.entries())) {
             for(let i = 0; i < entry[1].fields.length; i++) {
                 // TODO: this is wrong probably, will depend on implementation
-                if(entry[1].fields[i].label == 'siblings') {
+                if(entry[1].fields[i].label === 'siblings') {
                     result.push(entry[1]);
                     counter++;
                 }
