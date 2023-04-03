@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
 import ReactFamilyTree from 'react-family-tree';
-import { ExtNode } from 'relatives-tree/lib/types';
+import { Node, ExtNode, RelType, Gender } from 'relatives-tree/lib/types';
 import type { Genotype, CellValue } from '../../server/database';
 import GenotypeViewer from './genotypeViewer';
 
@@ -11,6 +11,7 @@ class genotypeFamilyTreePage {
     private baseGenotype: Genotype;
     private genotypesMap: Map<string, Genotype>;
     private element: JSX.Element[];
+    private nodes: Node[];
     private line: string; // temp for now just to display and to test
 
     private constructor(gv: GenotypeViewer, uid: string, width: number = upperLim, numParentGens: number = upperLim, numChildGens: number = upperLim) {
@@ -18,16 +19,17 @@ class genotypeFamilyTreePage {
         this.genotypesMap = gv.getAllGenotypes() as Map<string, Genotype>;
         this.element = []; 
         this.line = '';
+        this.nodes = [];
     }
 
     public static generateJSX(gv: GenotypeViewer, uid: number | string, width: number = upperLim, numParentGens: number = upperLim, numChildGens: number = upperLim): JSX.Element | string {
         let gftp: genotypeFamilyTreePage = new genotypeFamilyTreePage(gv, uid.toString(), width, numParentGens, numChildGens);
         gftp.displayLine(numParentGens, numChildGens, width);
         //return gftp.line;
-        return (<div>{gftp.element}
-            <ReactFamilyTree nodes={[]} rootId={''} width={0} height={0} renderNode={function (node: ExtNode): ReactNode {
+        //return (<div>{gftp.element}</div>);
+        return <ReactFamilyTree nodes={gftp.nodes} rootId={''} width={0} height={0} renderNode={function (node: ExtNode): ReactNode {
                 throw new Error('Function not implemented.');
-        } }></ReactFamilyTree></div>);
+        } }></ReactFamilyTree>;
     }
 
     private displayLine(numParentGens: number = upperLim, numChildGens: number = upperLim, numChildrenPerGens: number = upperLim): void {
@@ -113,7 +115,8 @@ class genotypeFamilyTreePage {
         // check for cycles using displayedParents list
         this.displayedParents.push(genotype);
 
-        // need to check traversal order
+        
+
         this.displayGenotype(parents[0]);
         this.displayGenotype(parents[1]);
 
@@ -122,7 +125,7 @@ class genotypeFamilyTreePage {
         
     }
 
-    private displayedChildren: Genotype[] = []; // TODO: need to consider how to check if children (and parents) are the same and if to link
+    private displayedChildren: Genotype[] = []; // TODO: need to consider how to check if children (and parents) are the same and if/how to link
     private displayChildrenLines(genotype: Genotype, numGenerations: number, maxPerGeneration: number): void {
         const children: Genotype[] = this.getChildren(genotype, maxPerGeneration);
         if(genotype.uid === 'AB' || genotype.uid === 'RNF' || numGenerations <= 0 || this.displayedChildren.includes(genotype) || children.length <= 0) { 
@@ -189,8 +192,33 @@ class genotypeFamilyTreePage {
         console.log(genotype.uid + " ");
         this.line += genotype.uid + " ";
         this.element.push(<div>{genotype.uid}</div>)
-        // TODO: add genotype to the element
 
+        let parents: Genotype[] = this.getParents(genotype);
+        let children: Genotype[] = this.getChildren(genotype);
+        let childrenInput = [];
+        for(let child of children) {
+            childrenInput.push({
+                "id": child.uid,
+                "type": "child" as RelType
+            })
+        }
+        this.nodes.push({
+            "id": genotype.uid,
+            "gender": "" as Gender,
+            "parents": [
+                {
+                    "id": parents[0].uid,
+                    "type": "mother" as RelType
+                },
+                {
+                    "id": parents[1].uid,
+                    "type": "father" as RelType
+                }
+            ],
+            "siblings": [],
+            "spouses": [],
+            "children": childrenInput
+          },)
     }   
 
 }

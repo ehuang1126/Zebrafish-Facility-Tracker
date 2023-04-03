@@ -22,7 +22,7 @@ function createWindow(): void {
 
 // run once initialized
 app.whenReady().then((): void => {
-    new XLSXDatabase(path.join(__dirname, '..', 'data', 'sample_input_one_lineage_for_EYH.xlsx')).attachHandlers(ipcMain);
+    new XLSXDatabase(path.join(__dirname, '..', 'data', 'sample_input.xlsx')).attachHandlers(ipcMain);
 
     createWindow();
 
