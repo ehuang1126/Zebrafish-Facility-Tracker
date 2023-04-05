@@ -28,6 +28,13 @@ type Genotype = {
     tanks: number[],
 };
 
+// ClutchIDs label the DOB of different clutches of the same Genotype in order to differentiate different clutches of fish
+type ClutchID = {
+    uid: string,
+    dob: string,
+    geneID: string
+}
+
 type Location = {
     // TODO add a field for the room
     rack: number,
@@ -60,6 +67,12 @@ abstract class Database {
     abstract writeTank(uid: number, tank: Tank): void;
 
     /**
+     * Moves a Tank to another Location. This would also need to update the 
+     * corresponding Racks.
+     */
+    abstract moveTank(uid: number, loc: Location): void;
+
+    /**
      * Returns a Genotype object representing the genotype in the given position
      * with fields populated from the database.
      */
@@ -78,9 +91,19 @@ abstract class Database {
     abstract findTank(loc: Location): (Tank | undefined);
 
     /**
+     * Culls a Tank, labeling genotype or clutch ID as dead as necessary. 
+     */
+    abstract cullTank(tankNum: number): void; 
+
+    /**
      * Returns an array of all the Racks.
      */
     abstract getRacks(): Rack[];
+
+    /**
+     * Writes a new Location object to the database.
+     */
+    abstract writeLocation(loc: Location): void;
 
     /**
      * Returns a Map of genotype names to Genotypes.
