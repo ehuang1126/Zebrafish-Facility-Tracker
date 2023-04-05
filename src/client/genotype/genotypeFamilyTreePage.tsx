@@ -12,7 +12,7 @@ class genotypeFamilyTreePage {
     private genotypesMap: Map<string, Genotype>;
     private element: JSX.Element[];
     private nodes: Node[];
-    private line: string; // temp for now just to display and to test
+    private line: string; // temp just to display and to test
 
     private constructor(gv: GenotypeViewer, uid: string, width: number = upperLim, numParentGens: number = upperLim, numChildGens: number = upperLim) {
         this.baseGenotype = gv.getGenotype() as Genotype;
@@ -28,7 +28,7 @@ class genotypeFamilyTreePage {
         //return gftp.line;
         //return (<div>{gftp.element}</div>);
         return <ReactFamilyTree nodes={gftp.nodes} rootId={''} width={0} height={0} renderNode={function (node: ExtNode): ReactNode {
-                throw new Error('Function not implemented.');
+                throw new Error('Function not implemented.'); 
         } }></ReactFamilyTree>;
     }
 
