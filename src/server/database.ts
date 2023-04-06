@@ -28,13 +28,6 @@ type Genotype = {
     tanks: number[],
 };
 
-// ClutchIDs label the DOB of different clutches of the same Genotype in order to differentiate different clutches of fish
-type ClutchID = {
-    uid: string,
-    dob: string,
-    geneID: string
-}
-
 type Location = {
     // TODO add a field for the room
     rack: number,
@@ -89,6 +82,12 @@ abstract class Database {
      * location.
      */
     abstract findTank(loc: Location): (Tank | undefined);
+
+
+    /**
+     * Merges the specified Tank numbers into the new Tank. 
+     */
+    abstract mergeTanks(tankNums: number[], newTank: Tank): void;
 
     /**
      * Culls a Tank, labeling genotype or clutch ID as dead as necessary. 
