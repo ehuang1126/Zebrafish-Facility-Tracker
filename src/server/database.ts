@@ -29,7 +29,7 @@ type Genotype = {
 };
 
 type Location = {
-    // TODO add a field for the room
+    room: string,
     rack: number,
     row: string,
     // col is 1-indexed
@@ -83,16 +83,16 @@ abstract class Database {
      */
     abstract findTank(loc: Location): (Tank | undefined);
 
-
     /**
      * Merges the specified Tank numbers into the new Tank. 
      */
     abstract mergeTanks(tankNums: number[], newTank: Tank): void;
 
     /**
-     * Culls a Tank, labeling genotype or clutch ID as dead as necessary. 
+     * Culls a Tank, removing it from its rack and labeling genotype or clutch
+     * ID as dead as necessary. 
      */
-    abstract cullTank(tankNum: number): void; 
+    abstract cullTank(tankNum: number, dead?: boolean): void; 
 
     /**
      * Returns an array of all the Racks.
@@ -100,7 +100,7 @@ abstract class Database {
     abstract getRacks(): Rack[];
 
     /**
-     * Writes a new Location object to the database.
+     * Writes a Location to the database.
      */
     abstract writeLocation(loc: Location): void;
 
