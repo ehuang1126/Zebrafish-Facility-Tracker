@@ -29,7 +29,7 @@ type Genotype = {
 };
 
 type Location = {
-    // TODO add a field for the room
+    room: string,
     rack: number,
     row: string,
     // col is 1-indexed

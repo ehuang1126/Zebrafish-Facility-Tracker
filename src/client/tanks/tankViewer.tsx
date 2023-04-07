@@ -173,13 +173,14 @@ class TankViewer extends TabsViewer<Props, State> {
                 // read the location back into a Location object
                 if(newState.locString !== undefined) {
                     // convert `locString` back to a location
-                    const locStringPieces: (RegExpMatchArray | null) = newState.locString.match(/^(\d+),?(\w+),?(\d+)$/);
+                    const locStringPieces: (RegExpMatchArray | null) = newState.locString.match(/^(\d+\w+),?(\d+),?(\w+),?(\d+)$/);
                     if (locStringPieces !== null) {
                         // if the locString was properly formatted
                         const loc: Location = {
-                            rack: Number(locStringPieces[1]),
-                            row: locStringPieces[2].toString().toUpperCase(),
-                            col: Number(locStringPieces[3]),
+                            room: locStringPieces[1].toString().toUpperCase(),
+                            rack: Number(locStringPieces[2]),
+                            row: locStringPieces[3].toString().toUpperCase(),
+                            col: Number(locStringPieces[4]),
                         };
                         newState.tank.loc = loc;
                     }

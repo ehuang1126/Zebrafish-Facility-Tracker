@@ -158,6 +158,7 @@ class XLSXDatabase extends Database {
                 0;
         const tank: Tank = {
             loc: {
+                room: "", // TODO this is a placeholder value, since I'll probably never use this class again
                 rack: rackNum,
                 row: '!',
                 col: -1,

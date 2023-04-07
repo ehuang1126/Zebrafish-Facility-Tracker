@@ -15,6 +15,7 @@
     "@types/node": "^16.11.56",
     "@types/react": "^18.0.17",
     "@types/react-dom": "^18.0.6",
+    "better-sqlite3": "^8.1.0",
     "electron": "^20.1.0",
     "framer-motion": "^7.2.1",
     "react": "^18.2.0",
@@ -32,11 +33,9 @@
     "react": "react-scripts start",
     "electron": "electron .",
     "kill": "fuser -k 3000/tcp",
-
     "prestart": "npm run build",
     "start": "(BROWSER=none npm run react &) && sleep 3 && npm run electron",
     "poststart": "npm run kill",
-
     "test": "react-scripts test"
   },
   "eslintConfig": {
@@ -58,6 +57,7 @@
     ]
   },
   "devDependencies": {
+    "@types/better-sqlite3": "^7.6.3",
     "webpack-cli": "^4.10.0"
   }
 }
