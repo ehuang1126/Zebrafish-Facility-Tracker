@@ -60,12 +60,6 @@ abstract class Database {
     abstract writeTank(uid: number, tank: Tank): void;
 
     /**
-     * Moves a Tank to another Location. This would also need to update the 
-     * corresponding Racks.
-     */
-    abstract moveTank(uid: number, loc: Location): void;
-
-    /**
      * Returns a Genotype object representing the genotype in the given position
      * with fields populated from the database.
      */
