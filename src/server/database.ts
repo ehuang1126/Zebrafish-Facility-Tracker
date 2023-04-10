@@ -104,6 +104,11 @@ abstract class Database {
     abstract getGenotypes(): Map<string, Genotype>;
 
     /**
+     * Returns a list of all direct children of a certain genotype. 
+     */
+    abstract getChildren(parent: Genotype): Genotype[]; 
+
+    /**
      * Attaches the event handlers that send database data back to the renderer.
      */
     public attachHandlers(ipcMain: Electron.IpcMain): void {
