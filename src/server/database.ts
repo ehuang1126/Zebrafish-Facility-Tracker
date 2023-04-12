@@ -8,7 +8,7 @@ type Field = {
 // A tank is an ordered array of label:data pairs.
 type Tank = {
     loc: Location,
-    genotype: string,
+    genotypes: string[],
     uid: number,
     fields: Field[],
 };
