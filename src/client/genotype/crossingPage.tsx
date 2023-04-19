@@ -1,5 +1,5 @@
 import React from "react";
-import { Td, Text, Textarea, Tr } from '@chakra-ui/react';
+import { Button, Stack, Table, TableContainer, Tbody, Td, Text, Textarea, Tr } from '@chakra-ui/react';
 import { CellValue, Field, Genotype } from "../../server/database";
 import JumpController from "../jumpController";
 
@@ -64,7 +64,50 @@ class CrossingPage extends React.Component<Props, State> {
      * Saves child Genotype back to database. 
      */
     private saveGenotype(): void {
-        
+        if(this.state.child === undefined || this.state.child.uid === undefined) {
+            // TODO: tell user to put in UID
+        } else {
+            // parses all the new fields for location-based jump links and collects
+        // the converted results
+        Promise.all(this.state.child.fields.map((field: Field): Promise<string> => {
+            return this.props.jumpController.convertLocationJumpLink(field.data.toString());
+        })).then((fields: string[]): void => {
+            // TODO This improperly updates state without checking current state,
+            // but I don't think there's a way to do it right.
+            this.setState((state: Readonly<State>, props: Readonly<Props>): Readonly<State> => {
+                if(state.child === undefined) {
+                    return state;
+                }
+
+                // deep-ish copy state
+                const newState: State = {
+                    child: {
+                        uid: state.child.uid,
+                        fields: [],
+                        tanks: state.child.tanks,
+                    },
+                    mother: state.mother,
+                    father: state.father,
+                };
+
+                // I don't know why this is necessary
+                newState.child = newState.child as Genotype;
+
+                // update state with parsed data
+                for(let i = 0; i < fields.length; i++) {
+                    newState.child.fields.push({
+                        label: state.child.fields[i].label,
+                        data: fields[i],
+                    });
+                }
+
+                // write back to database
+                window.electronAPI.writeGenotype(newState.child);
+
+                return newState;
+            });
+        });
+        }
     }
     /**
      * Converts the Genotype object's fields *other* than `fields` to JSX
@@ -107,8 +150,26 @@ class CrossingPage extends React.Component<Props, State> {
         ];
     }
 
-    private generateJSX(fields: Field[]): JSX.Element {
+    private fieldsToJSX(fields: Field[]): JSX.Element {
         return <></>;
+    }
+
+    private generateJSX(fields: Field[]): JSX.Element {
+        return (
+            <Stack>
+                <TableContainer id='tank-table'>
+                    <Table variant='striped'>
+                        <Tbody>
+                            { this.metadataToJSX() }
+                            { this.fieldsToJSX(fields) }
+                        </Tbody>
+                    </Table>
+                </TableContainer>
+                <Button onClick={ this.saveGenotype.bind(this) }>
+                    { 'save' }
+                </Button>
+            </Stack>
+        );
     }
 
     override render(): JSX.Element {
