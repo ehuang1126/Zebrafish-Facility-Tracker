@@ -1,5 +1,5 @@
 import React from "react";
-import { Button, Stack, Table, TableContainer, Tbody, Td, Text, Textarea, Tr } from '@chakra-ui/react';
+import { Button, Modal, Stack, Table, TableContainer, Tbody, Td, Text, Textarea, Tr } from '@chakra-ui/react';
 import { CellValue, Field, Genotype } from "../../server/database";
 import JumpController from "../jumpController";
 
@@ -13,7 +13,8 @@ type Props = {
 type State = {
     child?: Genotype,
     mother?: Genotype,
-    father?: Genotype
+    father?: Genotype,
+    genotypes?: Map<string, Genotype>,
 }
 
 class CrossingPage extends React.Component<Props, State> {
@@ -23,6 +24,7 @@ class CrossingPage extends React.Component<Props, State> {
             child: undefined,
             mother: undefined,
             father: undefined,
+            genotypes: undefined,
         };
     }
 
@@ -41,19 +43,78 @@ class CrossingPage extends React.Component<Props, State> {
             this.setState({
                 mother: await window.electronAPI.readGenotype(this.props.motherId),
                 father: await window.electronAPI.readGenotype(this.props.fatherId),
+                genotypes: await window.electronAPI.getGenotypes(),
             });
+
+            // auto-populate child UID, with mother and father UID fields
+            // TODO: is this the right place to call this?
+            this.setState((state: Readonly<State>, props: Readonly<Props>): Readonly<State> => {
+                if(state.mother === undefined || state.father === undefined || state.genotypes === undefined) {
+                    return state;
+                }
+ 
+                const newState: State = {
+                    child: {
+                        uid: String(state.genotypes.size + 1),
+                        fields: [{
+                            label: 'mother',
+                            data: state.mother.uid,
+                        }, {
+                            label: 'father',
+                            data: state.father.uid,
+                        }],
+                        tanks: [],
+                    },
+                    mother: state.mother,
+                    father: state.father,
+                    genotypes: state.genotypes,
+                }
+
+                return newState;
+            })
         })();
     }
 
     /**
-     * Saves field to current state. 
+     * Saves child field to current state. 
      */
     private saveField(fieldNum: number, data: string): void {
+        let checkedData: CellValue = data;
 
+        // check if number
+        if(data.trim().length > 0) {
+            const parsedNum: number = Number(data);
+            if(!Number.isNaN(parsedNum)) {
+                checkedData = parsedNum;
+            }
+        }
+
+        // save the data into state
+        this.setState((state: Readonly<State>): Readonly<State> => {
+            if(state.child === undefined) {
+                return state;
+            }
+
+            const child: Genotype = {
+                uid: state.child.uid,
+                fields: Array.from(state.child.fields),
+                tanks: state.child.tanks,
+            }
+            if(child.fields[fieldNum] !== undefined) {
+                child.fields[fieldNum].data = checkedData;
+            }
+            
+            return {
+                child: child,
+                mother: state.mother,
+                father: state.father,
+            };
+        });
     }
 
     private saveUID(uid: string): void {
         // TODO: make sure UID is not taken already. autofill?
+
     }
 
     private saveTanks(): void {
@@ -65,9 +126,13 @@ class CrossingPage extends React.Component<Props, State> {
      */
     private saveGenotype(): void {
         if(this.state.child === undefined || this.state.child.uid === undefined) {
-            // TODO: tell user to put in UID
-        } else {
-            // parses all the new fields for location-based jump links and collects
+            // TODO: tell user to put in UID?
+            return;
+        } else if(this.state.genotypes?.has(this.state.child.uid)) {
+            // TODO: inform user to put in new UID
+            return;
+        } 
+        // parses all the new fields for location-based jump links and collects
         // the converted results
         Promise.all(this.state.child.fields.map((field: Field): Promise<string> => {
             return this.props.jumpController.convertLocationJumpLink(field.data.toString());
@@ -107,7 +172,6 @@ class CrossingPage extends React.Component<Props, State> {
                 return newState;
             });
         });
-        }
     }
     /**
      * Converts the Genotype object's fields *other* than `fields` to JSX
@@ -150,14 +214,28 @@ class CrossingPage extends React.Component<Props, State> {
         ];
     }
 
-    private fieldsToJSX(fields: Field[]): JSX.Element {
-        return <></>;
+    // TODO: fix this to also show mother/father fields and make child's mother/father fields immutable
+    private fieldsToJSX(fields: Field[]): JSX.Element[] {
+        return fields.map((field: Field, i: number): JSX.Element => {
+            return (
+                <Tr key={ i }>
+                    <Td key='label'>{ field.label }</Td>
+                    <Td key='data'>
+                        { 
+                            <Textarea value={ field.data } rows={ 1 } 
+                                    onChange={ (e): void => { this.saveField(i, e.target.value) } }
+                            /> 
+                        }
+                    </Td>
+                </Tr>
+            );
+        });
     }
 
     private generateJSX(fields: Field[]): JSX.Element {
         return (
             <Stack>
-                <TableContainer id='tank-table'>
+                <TableContainer id='crossing-table'>
                     <Table variant='striped'>
                         <Tbody>
                             { this.metadataToJSX() }
@@ -170,6 +248,17 @@ class CrossingPage extends React.Component<Props, State> {
                 </Button>
             </Stack>
         );
+    }
+
+    /**
+     * This function will pop up with an error page using Chakra modal in case
+     * the child's input is incompatible. This will happen when the UID is taken 
+     * already, any of the tanks are taken already, other cases??? Maybe this
+     * can be more modular and be somewhere else. 
+     */
+    private generateErrorPopup(errorType: string): JSX.Element {
+        // TODO: add isValid or something to state to determine whether to call this or not
+        return <></>;
     }
 
     override render(): JSX.Element {
