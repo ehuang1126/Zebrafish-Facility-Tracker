@@ -15,6 +15,8 @@ type State = {
     mother?: Genotype,
     father?: Genotype,
     genotypes?: Map<string, Genotype>,
+    invalidUID: boolean,
+    invalidTanks: string[],
 }
 
 class CrossingPage extends React.Component<Props, State> {
@@ -25,6 +27,8 @@ class CrossingPage extends React.Component<Props, State> {
             mother: undefined,
             father: undefined,
             genotypes: undefined,
+            invalidUID: false,
+            invalidTanks: [],
         };
     }
 
@@ -35,7 +39,7 @@ class CrossingPage extends React.Component<Props, State> {
         return this.state.child;
     }
 
-/**
+    /**
      * Actually loads the parent Genotype data from the database.
      */
     override componentDidMount() {
@@ -68,6 +72,8 @@ class CrossingPage extends React.Component<Props, State> {
                     mother: state.mother,
                     father: state.father,
                     genotypes: state.genotypes,
+                    invalidUID: state.invalidUID,
+                    invalidTanks: state.invalidTanks,
                 }
 
                 return newState;
@@ -108,12 +114,51 @@ class CrossingPage extends React.Component<Props, State> {
                 child: child,
                 mother: state.mother,
                 father: state.father,
+                genotypes: state.genotypes,
+                invalidUID: state.invalidUID,
+                invalidTanks: state.invalidTanks,
             };
         });
     }
 
     private saveUID(uid: string): void {
-        // TODO: make sure UID is not taken already. autofill?
+        if(uid.trim().length > 0) {
+            const parsedNum: number = Number(uid);
+            if(!Number.isNaN(parsedNum)) {
+                this.setState((state: Readonly<State>): Readonly<State> => {                    
+                    return {
+                        child: state.child,
+                        mother: state.mother,
+                        father: state.father,
+                        genotypes: state.genotypes,
+                        invalidUID: true,
+                        invalidTanks: state.invalidTanks,
+                    }
+                });
+                return;
+            }
+        } 
+        this.setState((state: Readonly<State>): Readonly<State> => {
+            if(state.child === undefined) {
+                return state;
+            }
+
+            const child: Genotype = {
+                uid: uid,
+                fields: state.child.fields,
+                tanks: state.child.tanks,
+            }
+            
+            return {
+                child: child,
+                mother: state.mother,
+                father: state.father,
+                genotypes: state.genotypes,
+                invalidUID: state.invalidUID,
+                invalidTanks: state.invalidTanks,
+            }
+        });
+        
 
     }
 
@@ -153,6 +198,9 @@ class CrossingPage extends React.Component<Props, State> {
                     },
                     mother: state.mother,
                     father: state.father,
+                    genotypes: state.genotypes,
+                    invalidUID: state.invalidUID,
+                    invalidTanks: state.invalidTanks,
                 };
 
                 // I don't know why this is necessary
@@ -256,9 +304,22 @@ class CrossingPage extends React.Component<Props, State> {
      * already, any of the tanks are taken already, other cases??? Maybe this
      * can be more modular and be somewhere else. 
      */
-    private generateErrorPopup(errorType: string): JSX.Element {
-        // TODO: add isValid or something to state to determine whether to call this or not
-        return <></>;
+    private generateErrorPopup(): JSX.Element {
+        let message: string = '';
+        if(this.state.invalidUID) {
+            // TODO: check here to say why: is it already taken or is it NaN?
+            message += 'This UID is invalid.'
+        } 
+        if(this.state.invalidTanks.length > 0) {
+            // TODO
+            message += 'The tanks are invalid.'
+        }
+        if(message === '') {
+            return <></>;
+        }
+
+        //TODO: use chakra modal to generate popup message with error message. maybe this has to be in caller? 
+        return <>message</>;
     }
 
     override render(): JSX.Element {
