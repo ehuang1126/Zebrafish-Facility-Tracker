@@ -4,6 +4,7 @@ import LandingPage from '../landing/landingPage';
 import TanksPage from '../tanks/tanksPage';
 import GenotypesPage from '../genotype/genotypesPage';
 import JumpController from '../jumpController';
+import CrossingPage from '../crossing/crossingPage';
 
 import './view.css';
 
@@ -42,6 +43,7 @@ class View extends React.Component<Props, State> {
                     <Tab key='news'>news</Tab>
                     <Tab key='tanks'>tanks</Tab>
                     <Tab key='genotypes'>genotypes</Tab>
+                    <Tab key='crossing'>crossing</Tab>
                 </TabList>
 
                 <TabPanels>
@@ -53,6 +55,9 @@ class View extends React.Component<Props, State> {
                     </TabPanel>
                     <TabPanel key='genotypes'>
                         <GenotypesPage jumpController={ this.state?.jumpController }/>
+                    </TabPanel>
+                    <TabPanel key='crossing'>
+                        <CrossingPage jumpController={ this.state?.jumpController } />
                     </TabPanel>
                 </TabPanels>
             </Tabs>

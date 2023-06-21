@@ -19,7 +19,7 @@ type State = {
     invalidTanks: string[],
 }
 
-class CrossingPage extends React.Component<Props, State> {
+class CrossingTable extends React.Component<Props, State> {
     constructor(props: Readonly<Props>) {
         super(props);
         this.state = {
@@ -40,15 +40,17 @@ class CrossingPage extends React.Component<Props, State> {
     }
 
     /**
-     * Actually loads the parent Genotype data from the database.
+     * Actually loads the parents' Genotype data from the database.
      */
     override componentDidMount() {
         (async (): Promise<void> => {
+
             this.setState({
                 mother: await window.electronAPI.readGenotype(this.props.motherId),
                 father: await window.electronAPI.readGenotype(this.props.fatherId),
                 genotypes: await window.electronAPI.getGenotypes(),
             });
+            
 
             // auto-populate child UID, with mother and father UID fields
             // TODO: is this the right place to call this?
@@ -221,6 +223,7 @@ class CrossingPage extends React.Component<Props, State> {
             });
         });
     }
+
     /**
      * Converts the Genotype object's fields *other* than `fields` to JSX
      */
@@ -331,4 +334,4 @@ class CrossingPage extends React.Component<Props, State> {
     }
 }
 
-export default CrossingPage
+export default CrossingTable
