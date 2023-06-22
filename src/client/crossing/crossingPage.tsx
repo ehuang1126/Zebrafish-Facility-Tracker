@@ -26,7 +26,7 @@ class CrossingPage extends TabsPage {
     }
 
     /**
-     * Sets the selected parent ID to the selected uid.
+     * Sets the selected parent ID to the selected uid by storing them in the contentID of the current tab.
      */
     private selectParent(parent: number): (uid: string) => void {
         return (uid: string): void => {

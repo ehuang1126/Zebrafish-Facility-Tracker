@@ -1,5 +1,5 @@
 import React from "react";
-import { Button, Modal, Stack, Table, TableContainer, Tbody, Td, Text, Textarea, Tr } from '@chakra-ui/react';
+import { Button, Modal, Stack, Table, TableContainer, Tbody, Td, Text, Textarea, Th, Tr } from '@chakra-ui/react';
 import { CellValue, Field, Genotype } from "../../server/database";
 import JumpController from "../jumpController";
 
@@ -164,12 +164,12 @@ class CrossingTable extends React.Component<Props, State> {
 
     }
 
-    private saveTanks(): void {
+    private saveTanks(Tanks: string): void {
         // TODO: check how to implement this
     }
 
     /**
-     * Saves child Genotype back to database. 
+     * Saves child Genotype back to database. TODO: close current tab and open genotype tab
      */
     private saveGenotype(): void {
         if(this.state.child === undefined || this.state.child.uid === undefined) {
@@ -233,6 +233,10 @@ class CrossingTable extends React.Component<Props, State> {
         }
 
         return [
+            <Th></Th>,
+            <Th> Mother </Th>,
+            <Th> Father </Th>,
+            <Th> Child </Th>,
             <Tr key='uid'>
                 <Td>UID</Td>
                 <Td>
@@ -261,6 +265,13 @@ class CrossingTable extends React.Component<Props, State> {
                             (uid: number): string => `\\T${uid}` ).join('\n'))
                     }
                 </Td>
+                <Td>
+                { 
+                    <Textarea value={ '' } rows={ 1 } 
+                            onChange={ (e): void => { this.saveTanks(e.target.value) } }
+                    />
+                }
+                </Td>
             </Tr>,
         ];
     }
@@ -271,9 +282,11 @@ class CrossingTable extends React.Component<Props, State> {
             return (
                 <Tr key={ i }>
                     <Td key='label'>{ field.label }</Td>
-                    <Td key='data'>
+                    <Td key='mother data'>{ field.data }</Td>
+                    <Td key='father data'>{ this.state.father?.fields[i].data }</Td>
+                    <Td key='child data'>
                         { 
-                            <Textarea value={ field.data } rows={ 1 } 
+                            <Textarea value={ '' } rows={ 1 } 
                                     onChange={ (e): void => { this.saveField(i, e.target.value) } }
                             /> 
                         }
@@ -326,8 +339,8 @@ class CrossingTable extends React.Component<Props, State> {
     }
 
     override render(): JSX.Element {
-        if(this.state?.child !== undefined) {
-            return this.generateJSX(this.state.child.fields);
+        if(this.state?.mother !== undefined) {
+            return this.generateJSX(this.state.mother.fields);
         } else {
             return <Text>loading</Text>;
         }
