@@ -3,63 +3,81 @@ import JumpController from "../jumpController";
 import CrossingTable from "./crossingTable";
 import GenotypeSelector from "../genotype/genotypeSelector";
 import { Stack, Text } from "@chakra-ui/react";
+import TabsPage, { Props, State, TabState } from "../bases/tabsPage";
 
-type Props = {
-    jumpController: JumpController,
-};
 
-type State = {
-    motherId?: string,
-    fatherId?: string,
-};
+class CrossingPage extends TabsPage {
 
-class CrossingPage extends React.Component<Props, State> {
-    constructor(props: Readonly<Props>) {
-        super(props);   
-        this.state = {
-            motherId: undefined,
-            fatherId: undefined,
+    override jumpToID(uid: (string | number)): void {
+        // I don't think this needs to jump to any ID? Just saving the parent IDs for the table.
+    }
+
+    /**
+     * Helper function to determine how many parents to pick. 
+     */
+    private numParentsPicked(): number {
+        if(this.state.tabs[this.state.currentTab].contentSelected) {
+            return 2;
+        } else if(this.state.tabs[this.state.currentTab].contentID === -1) {
+            return 0;
+        } else {
+            return 1;
         }
     }
+
     /**
      * Sets the selected parent ID to the selected uid.
      */
     private selectParent(parent: number): (uid: string) => void {
         return (uid: string): void => {
+            // select mother
             if(parent === 0) {
                 this.setState((state: Readonly<State>): Readonly<State> => {                    
+                    const tabs: TabState[] = Array.from(state.tabs);
+                    tabs[state.currentTab] = {
+                        contentSelected: false,
+                        contentID: uid,
+                        name: 'Crossing Setup pt. 1',
+                    };
                     return {
-                        motherId: uid,
-                        fatherId: state.fatherId,
+                        tabs: tabs,
+                        currentTab: state.currentTab,
                     }
                 });
+            // select father
             } else {
                 this.setState((state: Readonly<State>): Readonly<State> => {                    
+                    const tabs: TabState[] = Array.from(state.tabs);
+                    tabs[state.currentTab] = {
+                        contentSelected: true,
+                        contentID: state.tabs[state.currentTab].contentID + ' x ' + uid,
+                        name: `genotype ${state.tabs[state.currentTab].contentID} x genotype ${uid}`
+                    };
                     return {
-                        motherId: state.motherId,
-                        fatherId: uid,
+                        tabs: tabs,
+                        currentTab: state.currentTab,
                     }
                 });
             }
         };
     }
 
-    override render(): JSX.Element {
-        if(this.state.motherId === undefined) {
-            return (<Stack>
-                <Text fontSize={'x-large'} textColor={'blue'}>Please select a mother. </Text>
-                <GenotypeSelector reportGenotype={ this.selectParent(0) } />
-            </Stack>);
-        }
+    override renderTabContent(): JSX.Element {
+        let numPicked = this.numParentsPicked();
+        let parent = 'mother';
         
-        if(this.state.fatherId === undefined) {
-            return (<Stack>
-                <Text fontSize={'x-large'} textColor={'blue'}>Please select a father. </Text>
-                <GenotypeSelector reportGenotype={ this.selectParent(1) } />
-            </Stack>);
+        if(numPicked === 2) { // both parents have been picked, display the table
+            let parentIDs = this.state.tabs[this.state.currentTab].contentID.toString().split(' x ');
+            return (<CrossingTable motherId = { parentIDs[0] } fatherId = { parentIDs[1] } jumpController={ this.props.jumpController } />);
+        } else if(numPicked === 1) { 
+            parent = 'father';
         }
-
-        return (<CrossingTable motherId = { this.state.motherId } fatherId = { this.state.fatherId } jumpController={ this.props.jumpController } />);
+        // select the correct parent
+        return (<Stack>
+            <Text fontSize={'x-large'} textColor={'blue'}>Please select a { parent }. </Text>
+            <GenotypeSelector reportGenotype={ this.selectParent(numPicked) } />
+        </Stack>);
+        
     }
 
 }
