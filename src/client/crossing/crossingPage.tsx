@@ -37,7 +37,7 @@ class CrossingPage extends TabsPage {
                     tabs[state.currentTab] = {
                         contentSelected: false,
                         contentID: uid,
-                        name: 'Crossing Setup pt. 1',
+                        name: 'Crossing Setup',
                     };
                     return {
                         tabs: tabs,

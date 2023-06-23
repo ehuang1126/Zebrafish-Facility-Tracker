@@ -1,5 +1,5 @@
 import React from "react";
-import { Button, Modal, Stack, Table, TableContainer, Tbody, Td, Text, Textarea, Th, Tr } from '@chakra-ui/react';
+import { Button, Modal, ModalBody, ModalCloseButton, ModalContent, ModalHeader, ModalOverlay, Stack, Table, TableContainer, Tbody, Td, Text, Textarea, Th, Tr } from '@chakra-ui/react';
 import { CellValue, Field, Genotype } from "../../server/database";
 import JumpController from "../jumpController";
 
@@ -15,9 +15,11 @@ type State = {
     mother?: Genotype,
     father?: Genotype,
     genotypes?: Map<string, Genotype>,
-    invalidUID: boolean,
-    invalidTanks: string[],
+    invalidUID: string
 }
+
+const TAKEN_UID_MESSAGE: string = 'The UID you have entered is already taken by another Genotype. Please enter a new UID. ';
+const INVALID_UID_MESSAGE: string = 'The UID you have entered is in an unrecognized format. Please enter a number. '
 
 class CrossingTable extends React.Component<Props, State> {
     constructor(props: Readonly<Props>) {
@@ -27,8 +29,7 @@ class CrossingTable extends React.Component<Props, State> {
             mother: undefined,
             father: undefined,
             genotypes: undefined,
-            invalidUID: false,
-            invalidTanks: [],
+            invalidUID: '',
         };
     }
 
@@ -53,7 +54,6 @@ class CrossingTable extends React.Component<Props, State> {
             
 
             // auto-populate child UID, with mother and father UID fields
-            // TODO: is this the right place to call this?
             this.setState((state: Readonly<State>, props: Readonly<Props>): Readonly<State> => {
                 if(state.mother === undefined || state.father === undefined || state.genotypes === undefined) {
                     return state;
@@ -75,7 +75,6 @@ class CrossingTable extends React.Component<Props, State> {
                     father: state.father,
                     genotypes: state.genotypes,
                     invalidUID: state.invalidUID,
-                    invalidTanks: state.invalidTanks,
                 }
 
                 return newState;
@@ -118,28 +117,11 @@ class CrossingTable extends React.Component<Props, State> {
                 father: state.father,
                 genotypes: state.genotypes,
                 invalidUID: state.invalidUID,
-                invalidTanks: state.invalidTanks,
             };
         });
     }
 
     private saveUID(uid: string): void {
-        if(uid.trim().length > 0) {
-            const parsedNum: number = Number(uid);
-            if(!Number.isNaN(parsedNum)) {
-                this.setState((state: Readonly<State>): Readonly<State> => {                    
-                    return {
-                        child: state.child,
-                        mother: state.mother,
-                        father: state.father,
-                        genotypes: state.genotypes,
-                        invalidUID: true,
-                        invalidTanks: state.invalidTanks,
-                    }
-                });
-                return;
-            }
-        } 
         this.setState((state: Readonly<State>): Readonly<State> => {
             if(state.child === undefined) {
                 return state;
@@ -157,26 +139,22 @@ class CrossingTable extends React.Component<Props, State> {
                 father: state.father,
                 genotypes: state.genotypes,
                 invalidUID: state.invalidUID,
-                invalidTanks: state.invalidTanks,
             }
         });
         
 
     }
 
-    private saveTanks(Tanks: string): void {
-        // TODO: check how to implement this
-    }
 
     /**
-     * Saves child Genotype back to database. TODO: close current tab and open genotype tab
+     * Saves child Genotype back to database, checking if the UID is valid. TODO: close current tab and open genotype tab
      */
     private saveGenotype(): void {
-        if(this.state.child === undefined || this.state.child.uid === undefined) {
-            // TODO: tell user to put in UID?
+        if(this.state.child === undefined || this.state.child.uid === undefined || Number.isNaN(Number.parseInt(this.state.child.uid))) {
+            this.setState({invalidUID: INVALID_UID_MESSAGE})
             return;
         } else if(this.state.genotypes?.has(this.state.child.uid)) {
-            // TODO: inform user to put in new UID
+            this.setState({invalidUID: TAKEN_UID_MESSAGE})
             return;
         } 
         // parses all the new fields for location-based jump links and collects
@@ -202,7 +180,6 @@ class CrossingTable extends React.Component<Props, State> {
                     father: state.father,
                     genotypes: state.genotypes,
                     invalidUID: state.invalidUID,
-                    invalidTanks: state.invalidTanks,
                 };
 
                 // I don't know why this is necessary
@@ -266,24 +243,27 @@ class CrossingTable extends React.Component<Props, State> {
                     }
                 </Td>
                 <Td>
-                { 
+                {/* 
+                    // TODO: should tanks be able to be edited here?
                     <Textarea value={ '' } rows={ 1 } 
                             onChange={ (e): void => { this.saveTanks(e.target.value) } }
                     />
-                }
+                */}
                 </Td>
             </Tr>,
         ];
     }
 
-    // TODO: fix this to also show mother/father fields and make child's mother/father fields immutable
+    // TODO: make child's mother/father fields immutable
     private fieldsToJSX(fields: Field[]): JSX.Element[] {
-        return fields.map((field: Field, i: number): JSX.Element => {
+        return fields.filter((value: Field): boolean => {
+            return value.data.toString().trim().length > 0;
+        }).map((field: Field, i: number): JSX.Element => {
             return (
                 <Tr key={ i }>
                     <Td key='label'>{ field.label }</Td>
-                    <Td key='mother data'>{ field.data }</Td>
-                    <Td key='father data'>{ this.state.father?.fields[i].data }</Td>
+                    <Td key='mother data'>{ this.props.jumpController.embedJumps(field.data.toString()) }</Td>
+                    <Td key='father data'>{ this.props.jumpController.embedJumps(this.state.father?.fields[i].data.toString() as string) }</Td>
                     <Td key='child data'>
                         { 
                             <Textarea value={ '' } rows={ 1 } 
@@ -310,6 +290,16 @@ class CrossingTable extends React.Component<Props, State> {
                 <Button onClick={ this.saveGenotype.bind(this) }>
                     { 'save' }
                 </Button>
+                <Modal onClose = { (): void => { this.setState({invalidUID: ''}) } } isOpen={ this.state.invalidUID !== '' }>
+                <ModalOverlay />
+                    <ModalContent>
+                    <ModalHeader>Error: Invalid UID</ModalHeader>
+                    <ModalCloseButton />
+                    <ModalBody>
+                        { this.state.invalidUID }
+                    </ModalBody>
+                    </ModalContent>
+                </Modal>
             </Stack>
         );
     }
@@ -317,24 +307,12 @@ class CrossingTable extends React.Component<Props, State> {
     /**
      * This function will pop up with an error page using Chakra modal in case
      * the child's input is incompatible. This will happen when the UID is taken 
-     * already, any of the tanks are taken already, other cases??? Maybe this
+     * already or the UID is not a number. Maybe this
      * can be more modular and be somewhere else. 
      */
-    private generateErrorPopup(): JSX.Element {
-        let message: string = '';
-        if(this.state.invalidUID) {
-            // TODO: check here to say why: is it already taken or is it NaN?
-            message += 'This UID is invalid.'
-        } 
-        if(this.state.invalidTanks.length > 0) {
-            // TODO
-            message += 'The tanks are invalid.'
-        }
-        if(message === '') {
-            return <></>;
-        }
+    private generateErrorPopup(message: string): JSX.Element {
 
-        //TODO: use chakra modal to generate popup message with error message. maybe this has to be in caller? 
+        //TODO: use chakra modal to generate popup message with error message. How to render this? 
         return <>message</>;
     }
 
