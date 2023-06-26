@@ -1,15 +1,17 @@
 import React from "react";
-import JumpController from "../jumpController";
 import CrossingTable from "./crossingTable";
 import GenotypeSelector from "../genotype/genotypeSelector";
 import { Stack, Text } from "@chakra-ui/react";
-import TabsPage, { Props, State, TabState } from "../bases/tabsPage";
+import TabsPage, { State, TabState } from "../bases/tabsPage";
 
 
 class CrossingPage extends TabsPage {
 
     override jumpToID(uid: (string | number)): void {
-        // I don't think this needs to jump to any ID? Just saving the parent IDs for the table.
+
+        this.props.jumpController.jumpToGenotype(uid.toString());
+        this.closeTab(this.state.currentTab);
+
     }
 
     /**
@@ -68,7 +70,7 @@ class CrossingPage extends TabsPage {
         
         if(numPicked === 2) { // both parents have been picked, display the table
             let parentIDs = this.state.tabs[this.state.currentTab].contentID.toString().split(' x ');
-            return (<CrossingTable motherId = { parentIDs[0] } fatherId = { parentIDs[1] } jumpController={ this.props.jumpController } />);
+            return (<CrossingTable motherId = { parentIDs[0] } fatherId = { parentIDs[1] } jumpController={ this.props.jumpController } crossingPage = { this }/>);
         } else if(numPicked === 1) { 
             parent = 'father';
         }

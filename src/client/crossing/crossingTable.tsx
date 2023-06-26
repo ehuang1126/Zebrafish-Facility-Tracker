@@ -2,12 +2,14 @@ import React from "react";
 import { Button, Modal, ModalBody, ModalCloseButton, ModalContent, ModalHeader, ModalOverlay, Stack, Table, TableContainer, Tbody, Td, Text, Textarea, Th, Tr } from '@chakra-ui/react';
 import { CellValue, Field, Genotype } from "../../server/database";
 import JumpController from "../jumpController";
+import CrossingPage from "./crossingPage";
 
 
 type Props = {
     motherId: string,
     fatherId: string,
     jumpController: JumpController,
+    crossingPage: CrossingPage
 };
 
 type State = {
@@ -58,19 +60,26 @@ class CrossingTable extends React.Component<Props, State> {
                 if(state.mother === undefined || state.father === undefined || state.genotypes === undefined) {
                     return state;
                 }
- 
+
+                const newChild = {
+                    uid: String(state.genotypes.size + 1),
+                    fields: state.mother.fields.map((field: Field): Field => {
+                        let newData = '';
+                        if(field.label === 'mother') {
+                            newData = this.props.motherId;
+                        } else if(field.label === 'father') {
+                            newData = this.props.fatherId;
+                        }
+                        return {
+                            label: field.label,
+                            data: newData,
+                        };
+                    }),
+                    tanks: [],
+                }
+
                 const newState: State = {
-                    child: {
-                        uid: String(state.genotypes.size + 1),
-                        fields: [{
-                            label: 'mother',
-                            data: state.mother.uid,
-                        }, {
-                            label: 'father',
-                            data: state.father.uid,
-                        }],
-                        tanks: [],
-                    },
+                    child: newChild,
                     mother: state.mother,
                     father: state.father,
                     genotypes: state.genotypes,
@@ -153,7 +162,7 @@ class CrossingTable extends React.Component<Props, State> {
         if(this.state.child === undefined || this.state.child.uid === undefined || Number.isNaN(Number.parseInt(this.state.child.uid))) {
             this.setState({invalidUID: INVALID_UID_MESSAGE})
             return;
-        } else if(this.state.genotypes?.has(this.state.child.uid)) {
+        } else if(this.state.genotypes?.has(this.state.child.uid.trim())) {
             this.setState({invalidUID: TAKEN_UID_MESSAGE})
             return;
         } 
@@ -172,7 +181,7 @@ class CrossingTable extends React.Component<Props, State> {
                 // deep-ish copy state
                 const newState: State = {
                     child: {
-                        uid: state.child.uid,
+                        uid: state.child.uid.trim(),
                         fields: [],
                         tanks: state.child.tanks,
                     },
@@ -198,6 +207,11 @@ class CrossingTable extends React.Component<Props, State> {
 
                 return newState;
             });
+        }).then((): void => {
+            // close the crossing table and open the new child Genotype's page
+            if(this.state.child !== undefined) {
+                this.props.crossingPage.jumpToID(this.state.child.uid)
+            }
         });
     }
 
@@ -246,7 +260,7 @@ class CrossingTable extends React.Component<Props, State> {
                 {/* 
                     // TODO: should tanks be able to be edited here?
                     <Textarea value={ '' } rows={ 1 } 
-                            onChange={ (e): void => { this.saveTanks(e.target.value) } }
+                            onChange={ (e): void => {  } }
                     />
                 */}
                 </Td>
@@ -254,10 +268,9 @@ class CrossingTable extends React.Component<Props, State> {
         ];
     }
 
-    // TODO: make child's mother/father fields immutable
     private fieldsToJSX(fields: Field[]): JSX.Element[] {
         return fields.filter((value: Field): boolean => {
-            return value.data.toString().trim().length > 0;
+            return value.label.toString().trim().length > 0;
         }).map((field: Field, i: number): JSX.Element => {
             return (
                 <Tr key={ i }>
@@ -266,7 +279,7 @@ class CrossingTable extends React.Component<Props, State> {
                     <Td key='father data'>{ this.props.jumpController.embedJumps(this.state.father?.fields[i].data.toString() as string) }</Td>
                     <Td key='child data'>
                         { 
-                            <Textarea value={ '' } rows={ 1 } 
+                            <Textarea value={ this.state.child?.fields[i].data } rows={ 1 } 
                                     onChange={ (e): void => { this.saveField(i, e.target.value) } }
                             /> 
                         }
@@ -288,9 +301,9 @@ class CrossingTable extends React.Component<Props, State> {
                     </Table>
                 </TableContainer>
                 <Button onClick={ this.saveGenotype.bind(this) }>
-                    { 'save' }
+                    { 'done' }
                 </Button>
-                <Modal onClose = { (): void => { this.setState({invalidUID: ''}) } } isOpen={ this.state.invalidUID !== '' }>
+                <Modal onClose={ (): void => { this.setState({invalidUID: ''}) } } isOpen={ this.state.invalidUID !== '' }>
                 <ModalOverlay />
                     <ModalContent>
                     <ModalHeader>Error: Invalid UID</ModalHeader>
@@ -304,17 +317,6 @@ class CrossingTable extends React.Component<Props, State> {
         );
     }
 
-    /**
-     * This function will pop up with an error page using Chakra modal in case
-     * the child's input is incompatible. This will happen when the UID is taken 
-     * already or the UID is not a number. Maybe this
-     * can be more modular and be somewhere else. 
-     */
-    private generateErrorPopup(message: string): JSX.Element {
-
-        //TODO: use chakra modal to generate popup message with error message. How to render this? 
-        return <>message</>;
-    }
 
     override render(): JSX.Element {
         if(this.state?.mother !== undefined) {
