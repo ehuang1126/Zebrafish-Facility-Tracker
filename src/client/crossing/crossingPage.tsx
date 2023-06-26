@@ -7,11 +7,12 @@ import TabsPage, { State, TabState } from "../bases/tabsPage";
 
 class CrossingPage extends TabsPage {
 
+    /**
+     * Opens the tab for the given uid, while closing the current crossing page.
+     */
     override jumpToID(uid: (string | number)): void {
-
         this.props.jumpController.jumpToGenotype(uid.toString());
         this.closeTab(this.state.currentTab);
-
     }
 
     /**

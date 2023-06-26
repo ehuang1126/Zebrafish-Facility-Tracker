@@ -130,6 +130,9 @@ class CrossingTable extends React.Component<Props, State> {
         });
     }
 
+    /**
+     * Saves UID into current state.
+     */
     private saveUID(uid: string): void {
         this.setState((state: Readonly<State>): Readonly<State> => {
             if(state.child === undefined) {
@@ -156,7 +159,7 @@ class CrossingTable extends React.Component<Props, State> {
 
 
     /**
-     * Saves child Genotype back to database, checking if the UID is valid. TODO: close current tab and open genotype tab
+     * Saves child Genotype back to database, checking if the UID is valid. 
      */
     private saveGenotype(): void {
         if(this.state.child === undefined || this.state.child.uid === undefined || Number.isNaN(Number.parseInt(this.state.child.uid))) {
@@ -268,6 +271,9 @@ class CrossingTable extends React.Component<Props, State> {
         ];
     }
 
+    /**
+     * Converts fields for all 3 Genotypes into corresponding JSX.
+     */
     private fieldsToJSX(fields: Field[]): JSX.Element[] {
         return fields.filter((value: Field): boolean => {
             return value.label.toString().trim().length > 0;
