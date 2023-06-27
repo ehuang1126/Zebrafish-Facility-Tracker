@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, Text, Wrap } from '@chakra-ui/react';
+import { Button, Input, Stack, Text, Wrap } from '@chakra-ui/react';
 import type { Genotype } from '../../server/database';
 
 type Props = {
@@ -8,6 +8,7 @@ type Props = {
 
 type State = {
     genotypes?: Map<string, Genotype>,
+    filteredGenotypes?: Map<string, Genotype>,
 };
 
 class GenotypeSelector extends React.Component<Props, State> {
@@ -18,6 +19,7 @@ class GenotypeSelector extends React.Component<Props, State> {
         (async (): Promise<void> => {
             this.setState({
                 genotypes: await window.electronAPI.getGenotypes(),
+                filteredGenotypes: await window.electronAPI.getGenotypes(),
             });
         })();
     }
@@ -34,19 +36,60 @@ class GenotypeSelector extends React.Component<Props, State> {
                 });
     }
 
+    /**
+     * Filters the displayed genotypes. The current algorithm selects for any Genotypes that
+     * contain all of the words in the query in at least one field. 
+     */
+    private filterGenotypes(query: string): void {
+        if(query === '') {
+            this.setState({
+                filteredGenotypes: this.state.genotypes,
+            })
+            return;
+        }
+        let words: string[] = query.split(' ');
+        this.setState((state: Readonly<State>): Readonly<State> => {
+            if(state.genotypes === undefined) {
+                return state;
+            }
+            let newGenotypes: Map<string, Genotype> = new Map();
+            for(let [uid, genotype] of Array.from(state.genotypes.entries())) {
+                if(newGenotypes.has(uid)) continue;
+                let containsAllWords: boolean = true;
+                for(let word of words) {
+                    let fieldsContainWord: boolean = false
+                    for(let field of genotype.fields) {
+                        if(field.data.toString().toLowerCase().includes(word.toLowerCase())) fieldsContainWord = true;
+                    }
+                    if(!fieldsContainWord) containsAllWords = false;
+                }
+                if(containsAllWords) newGenotypes.set(uid, genotype);
+            }
+            return {
+                genotypes: state.genotypes,
+                filteredGenotypes: newGenotypes,
+            };
+        });
+        
+    }
+
     override render(): JSX.Element {
-        if(this.state?.genotypes !== undefined) {
+        if(this.state?.filteredGenotypes !== undefined) {
             return (
-                <Wrap>
-                    { Array.from(this.state.genotypes.entries(),
-                            ([uid, genotype]: [string, Genotype], i: number): JSX.Element => {
-                        return (
-                            <Button onClick={ (): void => { this.selectGenotype(uid) } } key={ i }>
-                                <h2>genotype { `${ uid }` }</h2>
-                            </Button>
-                        );
-                    }) }
-                </Wrap>
+                <Stack>
+                    <Input placeholder='Search for a genotype' onChange={ (e): void => { this.filterGenotypes(e.target.value) } }/>
+                    <Wrap>
+                        { Array.from(this.state.filteredGenotypes.entries(),
+                                ([uid, genotype]: [string, Genotype], i: number): JSX.Element => {
+                            return (
+                                <Button onClick={ (): void => { this.selectGenotype(uid) } } key={ i }>
+                                    <h2>genotype { `${ uid }` }</h2>
+                                </Button>
+                            );
+                        }) }
+                    </Wrap>
+                </Stack>
+                
             );
         } else {
             return <Text>loading</Text>;
