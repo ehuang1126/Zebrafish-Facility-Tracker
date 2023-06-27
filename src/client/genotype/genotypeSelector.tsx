@@ -1,5 +1,6 @@
 import React from 'react';
-import { Button, Input, Stack, Text, Wrap } from '@chakra-ui/react';
+import { Button, Input, InputGroup, InputRightElement, Stack, Text, Wrap } from '@chakra-ui/react';
+import { FaSearch } from "react-icons/fa";
 import type { Genotype } from '../../server/database';
 
 type Props = {
@@ -77,7 +78,13 @@ class GenotypeSelector extends React.Component<Props, State> {
         if(this.state?.filteredGenotypes !== undefined) {
             return (
                 <Stack>
-                    <Input placeholder='Search for a genotype' onChange={ (e): void => { this.filterGenotypes(e.target.value) } }/>
+                    <InputGroup>
+                        <InputRightElement>
+                            <FaSearch/>
+                        </InputRightElement>
+                        <Input placeholder='Search for a genotype' onChange={ (e): void => { this.filterGenotypes(e.target.value) } }/>
+                    </InputGroup>
+                    
                     <Wrap>
                         { Array.from(this.state.filteredGenotypes.entries(),
                                 ([uid, genotype]: [string, Genotype], i: number): JSX.Element => {

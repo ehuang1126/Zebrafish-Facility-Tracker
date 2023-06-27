@@ -19,6 +19,7 @@
     "framer-motion": "^7.2.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-icons": "^4.10.1",
     "react-scripts": "5.0.1",
     "run-script-os": "^1.1.6",
     "typescript": "^4.8.2",
@@ -32,11 +33,9 @@
     "react": "react-scripts start",
     "electron": "electron .",
     "kill": "fuser -k 3000/tcp",
-
     "prestart": "npm run build",
     "start": "(BROWSER=none npm run react &) && sleep 3 && npm run electron",
     "poststart": "npm run kill",
-
     "test": "react-scripts test"
   },
   "eslintConfig": {
