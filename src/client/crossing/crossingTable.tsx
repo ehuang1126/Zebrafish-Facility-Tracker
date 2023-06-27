@@ -2,14 +2,12 @@ import React from "react";
 import { Button, Modal, ModalBody, ModalCloseButton, ModalContent, ModalHeader, ModalOverlay, Stack, Table, TableContainer, Tbody, Td, Text, Textarea, Th, Tr } from '@chakra-ui/react';
 import { CellValue, Field, Genotype } from "../../server/database";
 import JumpController from "../jumpController";
-import CrossingPage from "./crossingPage";
-
 
 type Props = {
-    motherId: string,
+    motherId: string, 
     fatherId: string,
     jumpController: JumpController,
-    crossingPage: CrossingPage
+    onClose: (uid: string) => void; // callback function upon saving child Genotype
 };
 
 type State = {
@@ -213,7 +211,7 @@ class CrossingTable extends React.Component<Props, State> {
         }).then((): void => {
             // close the crossing table and open the new child Genotype's page
             if(this.state.child !== undefined) {
-                this.props.crossingPage.jumpToID(this.state.child.uid)
+                this.props.onClose(this.state.child.uid);
             }
         });
     }

@@ -71,7 +71,7 @@ class CrossingPage extends TabsPage {
         
         if(numPicked === 2) { // both parents have been picked, display the table
             let parentIDs = this.state.tabs[this.state.currentTab].contentID.toString().split(' x ');
-            return (<CrossingTable motherId = { parentIDs[0] } fatherId = { parentIDs[1] } jumpController={ this.props.jumpController } crossingPage = { this }/>);
+            return (<CrossingTable motherId = { parentIDs[0] } fatherId = { parentIDs[1] } jumpController={ this.props.jumpController } onClose = { this.jumpToID.bind(this) }/>);
         } else if(numPicked === 1) { 
             parent = 'father';
         }
