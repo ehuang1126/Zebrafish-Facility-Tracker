@@ -1,7 +1,7 @@
 import React from 'react';
-import { Button, Input, InputGroup, InputRightElement, Stack, Text, Wrap } from '@chakra-ui/react';
+import { Button, Input, InputGroup, InputRightElement, Stack, Text, Tooltip, Wrap } from '@chakra-ui/react';
 import { FaSearch } from "react-icons/fa";
-import type { Genotype } from '../../server/database';
+import type { Field, Genotype } from '../../server/database';
 
 type Props = {
     reportGenotype: (uid: string) => void,
@@ -89,9 +89,13 @@ class GenotypeSelector extends React.Component<Props, State> {
                         { Array.from(this.state.filteredGenotypes.entries(),
                                 ([uid, genotype]: [string, Genotype], i: number): JSX.Element => {
                             return (
-                                <Button onClick={ (): void => { this.selectGenotype(uid) } } key={ i }>
-                                    <h2>genotype { `${ uid }` }</h2>
-                                </Button>
+                                <Tooltip label={ genotype.fields.find((field: Field): boolean => { return field.label === 'fish' }) !== undefined ? 
+                                genotype.fields.find((field: Field): boolean => { return field.label === 'fish' })?.data.toString() : genotype.uid } placement='bottom-end'>
+                                    <Button onClick={ (): void => { this.selectGenotype(uid) } } key={ i }>
+                                        <h2>genotype { `${ uid }` }</h2>
+                                    </Button>
+                                </Tooltip>
+                                
                             );
                         }) }
                     </Wrap>
