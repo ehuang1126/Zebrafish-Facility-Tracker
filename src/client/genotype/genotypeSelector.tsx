@@ -48,7 +48,7 @@ class GenotypeSelector extends React.Component<Props, State> {
             })
             return;
         }
-        let words: string[] = query.split(' ');
+        let words: string[] = query.split(new RegExp(', | '));
         this.setState((state: Readonly<State>): Readonly<State> => {
             if(state.genotypes === undefined) {
                 return state;
