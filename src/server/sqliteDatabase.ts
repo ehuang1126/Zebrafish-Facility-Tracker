@@ -221,8 +221,8 @@ class SQLiteDatabase extends Database {
             this._findTank = this.db.transaction(
                 (loc: Location): (Tank | undefined) => {
 
-                    return this.db.prepare("SELECT * FROM tanks WHERE room=? AND rack=? AND row_num=? AND col_num=?")
-                                  .get(loc.room, loc.rack, SQLiteDatabase.atoi(loc.row), loc.col);
+                    return SQLiteDatabase.dbToTank(this.db.prepare("SELECT * FROM tanks WHERE room=? AND rack=? AND row_num=? AND col_num=?")
+                                  .get(loc.room, loc.rack, SQLiteDatabase.atoi(loc.row), loc.col));
 
                 }
             );
