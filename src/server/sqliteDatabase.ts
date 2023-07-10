@@ -29,6 +29,10 @@ class SQLiteDatabase extends Database {
     private _findTank: (((loc: Location) => (Tank | undefined)) | undefined);
     private _getRacks: ((() => Rack[]) | undefined);
     private _getGenotypes: ((() => Map<string, Genotype>) | undefined);
+    private _mergeTanks: (((tankNums: number[], newTank: Tank) => void) | undefined)
+    private _cullTank: (((tankNum: number, dead?: boolean | undefined) => void) | undefined);
+    private _writeLocation: (((loc: Location) => void) | undefined);
+    private _getChildren: (((parent: Genotype) => Genotype[]) | undefined);
 
     constructor(filename: string) {
         super();
@@ -73,7 +77,7 @@ class SQLiteDatabase extends Database {
                 row: SQLiteDatabase.itoa(row.row_num),
                 col: row.col_num
             },
-            genotype: row.genotype_id,
+            genotypes: [row.genotype_id],
             uid: row.tank_uid,
             fields: fields
         };
@@ -101,7 +105,7 @@ class SQLiteDatabase extends Database {
      * Returns a Tank object representing the tank with the given UID and
      * fields populated from the database.
      */
-    readTank(uid: number): (Tank | undefined) {
+    override readTank(uid: number): (Tank | undefined) {
         if(this._readTank === undefined) {
             this._readTank = this.db.transaction(
                 (uid: number): (Tank | undefined) => {
@@ -127,7 +131,7 @@ class SQLiteDatabase extends Database {
 
      * TODO check for and add novel features
      */
-    writeTank(uid: number, tank: Tank): void {
+    override writeTank(uid: number, tank: Tank): void {
         if(this._writeTank === undefined) {
             this._writeTank = this.db.transaction(
                 (uid: number, tank: Tank): void => {
@@ -148,7 +152,7 @@ class SQLiteDatabase extends Database {
                                 tank.loc.rack,
                                 SQLiteDatabase.atoi(tank.loc.row),
                                 tank.loc.col,
-                                tank.genotype,
+                                tank.genotypes,
                                 ...data);
 
                 }
@@ -161,7 +165,7 @@ class SQLiteDatabase extends Database {
      * Returns a Genotype object representing the genotype in the given position
      * with fields populated from the database.
      */
-    readGenotype(uid: string): (Genotype | undefined) {
+    override readGenotype(uid: string): (Genotype | undefined) {
         if(this._readGenotype === undefined) {
             this._readGenotype = this.db.transaction(
                 (uid: string): (Genotype | undefined) => {
@@ -187,7 +191,7 @@ class SQLiteDatabase extends Database {
 
      * TODO check for and add novel features
      */
-    writeGenotype(genotype: Genotype): void {
+    override writeGenotype(genotype: Genotype): void {
         if(this._writeGenotype === undefined) {
             this._writeGenotype = this.db.transaction(
                 (genotype: Genotype): void => {
@@ -216,7 +220,7 @@ class SQLiteDatabase extends Database {
      * Returns the Tank object that represents the tank in the given physical
      * location.
      */
-    findTank(loc: Location): (Tank | undefined) {
+    override findTank(loc: Location): (Tank | undefined) {
         if(this._findTank === undefined) {
             this._findTank = this.db.transaction(
                 (loc: Location): (Tank | undefined) => {
@@ -233,7 +237,7 @@ class SQLiteDatabase extends Database {
     /**
      * Returns an array of all the Racks.
      */
-    getRacks(): Rack[] {
+    override getRacks(): Rack[] {
         if(this._getRacks === undefined) {
             this._getRacks = this.db.transaction(
                 (): Rack[] => {
@@ -247,16 +251,66 @@ class SQLiteDatabase extends Database {
     /**
      * Returns a Map of genotype names to Genotypes.
      */
-    getGenotypes(): Map<string, Genotype> {
+    override getGenotypes(): Map<string, Genotype> {
         if(this._getGenotypes === undefined) {
             this._getGenotypes = this.db.transaction(
                 (): Map<string, Genotype> => {
-                    throw new Error('Method not implemented.');
+                    const ret = new Map<string, Genotype>();
+                    const ids: any[] = this.db.prepare("SELECT genotype_id FROM genotypes").all()
+                    for(let uid of ids) {
+                        let currGenotype = this.readGenotype(uid);
+                        if(currGenotype !== undefined) {
+                            ret.set(uid, currGenotype);
+                        }
+                    }
+                    return ret;
                 }
             );
         }
         return this._getGenotypes();
     }
+
+    override mergeTanks(tankNums: number[], newTank: Tank): void {
+        if(this._mergeTanks === undefined) {
+            this._mergeTanks = this.db.transaction(
+                (tankNums: number[], newTank: Tank): void => {
+                    throw new Error('Method not implemented.');
+                }
+            )
+        }
+        return this._mergeTanks(tankNums, newTank);
+    }
+    override cullTank(tankNum: number, dead?: boolean | undefined): void {
+        if(this._cullTank === undefined) {
+            this._cullTank = this.db.transaction(
+                (tankNum: number, dead?: boolean | undefined): void => {
+                    throw new Error('Method not implemented.');
+                }
+            )
+        }
+        return this._cullTank(tankNum, dead);
+    }
+    override writeLocation(loc: Location): void {
+        if(this._writeLocation === undefined) {
+            this._writeLocation = this.db.transaction(
+                (loc: Location): void => {
+                    throw new Error('Method not implemented.');
+                }
+            )
+        }
+        return this._writeLocation(loc);
+    }
+    override getChildren(parent: Genotype): Genotype[] {
+        if(this._getChildren === undefined) {
+            this._getChildren = this.db.transaction(
+                (parent: Genotype): Genotype[] => {
+                    throw new Error('Method not implemented. ');
+                }
+            )
+        }
+        return this._getChildren(parent);
+    }
+
 }
 
 export default SQLiteDatabase;
