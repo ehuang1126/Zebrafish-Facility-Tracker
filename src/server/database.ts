@@ -8,7 +8,7 @@ type Field = {
 // A tank is an ordered array of label:data pairs.
 type Tank = {
     loc: Location,
-    genotype: string,
+    genotypes: string[],
     uid: number,
     fields: Field[],
 };
@@ -78,14 +78,35 @@ abstract class Database {
     abstract findTank(loc: Location): (Tank | undefined);
 
     /**
+     * Merges the specified Tank numbers into the new Tank. 
+     */
+    abstract mergeTanks(tankNums: number[], newTank: Tank): void;
+
+    /**
+     * Culls a Tank, removing it from its rack and labeling genotype or clutch
+     * ID as dead as necessary. 
+     */
+    abstract cullTank(tankNum: number, dead?: boolean): void; 
+
+    /**
      * Returns an array of all the Racks.
      */
     abstract getRacks(): Rack[];
 
     /**
+     * Writes a Location to the database.
+     */
+    abstract writeLocation(loc: Location): void;
+
+    /**
      * Returns a Map of genotype names to Genotypes.
      */
     abstract getGenotypes(): Map<string, Genotype>;
+
+    /**
+     * Returns a list of all direct children of a certain genotype. 
+     */
+    abstract getChildren(parent: Genotype): Genotype[]; 
 
     /**
      * Attaches the event handlers that send database data back to the renderer.
