@@ -277,7 +277,7 @@ class SQLiteDatabase extends Database {
         if(this._mergeTanks === undefined) {
             this._mergeTanks = this.db.transaction(
                 (tankNums: number[], newTank: Tank): void => {
-                    throw new Error('Method not implemented.');
+                    throw new Error('Method not implemented.'); // dependent on fixing tank table to include multiple genotypes
                 }
             )
         }
@@ -288,7 +288,7 @@ class SQLiteDatabase extends Database {
         if(this._cullTank === undefined) {
             this._cullTank = this.db.transaction(
                 (tankNum: number, dead?: boolean | undefined): void => {
-                    throw new Error('Method not implemented.'); // dependent on building graveyard
+                    throw new Error('Method not implemented.'); // TODO dependent on building graveyard
                 }
             )
         }
@@ -299,7 +299,7 @@ class SQLiteDatabase extends Database {
         if(this._writeLocation === undefined) {
             this._writeLocation = this.db.transaction(
                 (loc: Location): void => {
-                    throw new Error('Method not implemented.');
+                    throw new Error('Method not implemented.'); // TODO dependent on Location reimplementation
                 }
             )
         }
