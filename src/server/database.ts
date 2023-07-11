@@ -106,7 +106,7 @@ abstract class Database {
     /**
      * Returns a list of all direct children of a certain genotype. 
      */
-    abstract getChildren(parent: Genotype): Genotype[]; 
+    abstract getChildren(parentId: string): Genotype[]; 
 
     /**
      * Attaches the event handlers that send database data back to the renderer.

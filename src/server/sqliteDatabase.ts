@@ -32,7 +32,7 @@ class SQLiteDatabase extends Database {
     private _mergeTanks: (((tankNums: number[], newTank: Tank) => void) | undefined)
     private _cullTank: (((tankNum: number, dead?: boolean | undefined) => void) | undefined);
     private _writeLocation: (((loc: Location) => void) | undefined);
-    private _getChildren: (((parent: Genotype) => Genotype[]) | undefined);
+    private _getChildren: (((parentId: string) => Genotype[]) | undefined);
 
     constructor(filename: string) {
         super();
@@ -255,7 +255,7 @@ class SQLiteDatabase extends Database {
         if(this._getGenotypes === undefined) {
             this._getGenotypes = this.db.transaction(
                 (): Map<string, Genotype> => {
-                    const ret = new Map<string, Genotype>();
+                    const ret: Map<string, Genotype> = new Map<string, Genotype>();
                     const ids: any[] = this.db.prepare("SELECT genotype_id FROM genotypes").all()
                     for(let uid of ids) {
                         let currGenotype = this.readGenotype(uid);
@@ -270,6 +270,9 @@ class SQLiteDatabase extends Database {
         return this._getGenotypes();
     }
 
+    /**
+     * Merges the specified Tank numbers into the new Tank.
+     */
     override mergeTanks(tankNums: number[], newTank: Tank): void {
         if(this._mergeTanks === undefined) {
             this._mergeTanks = this.db.transaction(
@@ -280,16 +283,18 @@ class SQLiteDatabase extends Database {
         }
         return this._mergeTanks(tankNums, newTank);
     }
+
     override cullTank(tankNum: number, dead?: boolean | undefined): void {
         if(this._cullTank === undefined) {
             this._cullTank = this.db.transaction(
                 (tankNum: number, dead?: boolean | undefined): void => {
-                    throw new Error('Method not implemented.');
+                    throw new Error('Method not implemented.'); // dependent on building graveyard
                 }
             )
         }
         return this._cullTank(tankNum, dead);
     }
+
     override writeLocation(loc: Location): void {
         if(this._writeLocation === undefined) {
             this._writeLocation = this.db.transaction(
@@ -300,15 +305,20 @@ class SQLiteDatabase extends Database {
         }
         return this._writeLocation(loc);
     }
-    override getChildren(parent: Genotype): Genotype[] {
+
+    override getChildren(parentId: string): Genotype[] {
         if(this._getChildren === undefined) {
             this._getChildren = this.db.transaction(
-                (parent: Genotype): Genotype[] => {
-                    throw new Error('Method not implemented. ');
+                (parentId: string): Genotype[] => {
+                    const children: any[] = this.db.prepare("SELECT * FROM genotypes WHERE mother_id=? OR father_id=?")
+                        .all(parentId, parentId);
+                    return children.map((row: any) => {
+                        return SQLiteDatabase.dbToGenotype(row);
+                    });
                 }
             )
         }
-        return this._getChildren(parent);
+        return this._getChildren(parentId);
     }
 
 }
