@@ -34,5 +34,26 @@ CREATE TABLE IF NOT EXISTS tanks (
     rack INTEGER,
     row_num INTEGER,
     col_num INTEGER,
-    genotype_id TEXT
+    genotype_id_1 TEXT,
+    genotype_id_2 TEXT,
+    genotype_id_3 TEXT
 );
+
+CREATE TABLE IF NOT EXISTS users (
+    db_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER
+    -- add settings/preferences as necessary
+)
+
+CREATE TABLE IF NOT EXISTS graveyard (
+    db_if INTEGER PRIMARY KEY AUTOINCREMENT,
+    tank_uid INTEGER,
+    cull_date DATE,
+    room TEXT,
+    rack INTEGER,
+    row_num INTEGER,
+    col_num INTEGER,
+    genotype_id_1 TEXT,
+    genotype_id_2 TEXT,
+    genotype_id_3 TEXT
+)

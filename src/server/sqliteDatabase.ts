@@ -65,7 +65,7 @@ class SQLiteDatabase extends Database {
         const fields: Field[] = [];
         for(const label in row) {
             if(label !== "room" && label !== "rack" && label !== "row_num" && label !== "col_num" &&
-                label !== "genotype_id" && label !== "tank_uid") {
+                !label.includes("genotype_id") && label !== "tank_uid") {
                 fields.push({ label: label, data: row[label] });
             }
         }
@@ -77,7 +77,7 @@ class SQLiteDatabase extends Database {
                 row: SQLiteDatabase.itoa(row.row_num),
                 col: row.col_num
             },
-            genotypes: [row.genotype_id],
+            genotypes: [row.genotype_id_1, row.genotype_id_2, row.genotype_id_3],
             uid: row.tank_uid,
             fields: fields
         };
@@ -137,13 +137,13 @@ class SQLiteDatabase extends Database {
                 (uid: number, tank: Tank): void => {
 
                     const data = [];
-                    let query: string = "INSERT INTO tanks (db_id, tank_uid, room, rack, row_num, col_num, genotype_id";
+                    let query: string = "INSERT INTO tanks (db_id, tank_uid, room, rack, row_num, col_num, genotype_id_1, genotype_id_2, genotype_id_3";
                     for(const label in tank.fields) {
                         query += ", " + label;
                         data.push(tank.fields[label]);
                     }
                     query += ") VALUES (NULL";
-                    query += ", ?".repeat(6 + tank.fields.length);
+                    query += ", ?".repeat(8 + tank.fields.length);
                     query += ")";
 
                     this.db.prepare(query)
