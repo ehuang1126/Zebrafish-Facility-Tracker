@@ -96,7 +96,7 @@ class SQLiteDatabase extends Database {
 
         return {
             uid: row.genotype_id,
-            fields: [],
+            fields: fields,
             tanks: []
         };
     }
