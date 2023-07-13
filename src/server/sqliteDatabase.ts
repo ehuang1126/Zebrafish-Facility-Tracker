@@ -129,7 +129,8 @@ class SQLiteDatabase extends Database {
     /**
      * Writes a Tank object to the database, reading data from the object's
      * fields. If the Tank has a Field for a column that does not exist in the
-     * database, the column will be created first.
+     * database, the column will be created first. If the Tank has more genotypes
+     * than the database has columns for, the extra columns will be created first.
 
      * TODO check for and add novel features
      */
@@ -139,13 +140,19 @@ class SQLiteDatabase extends Database {
                 (uid: number, tank: Tank): void => {
 
                     const data = [];
-                    let query: string = "INSERT INTO tanks (db_id, tank_uid, room, rack, row_num, col_num, genotype_id_1, genotype_id_2, genotype_id_3";
+                    let query: string = "INSERT INTO tanks (db_id, tank_uid, room, rack, row_num, col_num";
+                    let numColumns: number = 6;
+                    for(let genotype of tank.genotypes) {
+                        numColumns += 1;
+                        query += ", " + `genotype_id_${numColumns - 6}`;
+                        data.push(genotype)
+                    }
                     for(const label in tank.fields) {
                         query += ", " + label;
                         data.push(tank.fields[label]);
                     }
                     query += ") VALUES (NULL";
-                    query += ", ?".repeat(8 + tank.fields.length);
+                    query += ", ?".repeat(numColumns - 1 + tank.fields.length);
                     query += ")";
 
                     this.db.prepare(query)
