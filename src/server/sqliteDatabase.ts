@@ -297,7 +297,42 @@ class SQLiteDatabase extends Database {
         if(this._cullTank === undefined) {
             this._cullTank = this.db.transaction(
                 (tankNum: number, dead?: boolean | undefined): void => {
-                    throw new Error('Method not implemented.'); // TODO dependent on building graveyard
+                    const tank = this.readTank(tankNum);
+                    if(tank === undefined) {
+                        throw new Error(`Tank with uid ${tankNum} cannot be found. `);
+                    }
+                    
+                    // remove from tanks table
+                    this.db.prepare("DELETE * FROM tanks WHERE tank_uid=?").run(tankNum);
+
+                    // insert into graveyard
+                    const data = [];
+                    let query: string = "INSERT INTO graveyard (db_id, tank_uid, cull_date, room, rack, row_num, col_num";
+                    let numColumns: number = 6;
+
+                    for(let genotype of tank.genotypes) {
+                        numColumns += 1;
+                        query += ", " + `genotype_id_${numColumns - 6}`;
+                        data.push(genotype)
+                    }
+                    for(const label in tank.fields) {
+                        query += ", " + label;
+                        data.push(tank.fields[label]);
+                    }
+                    query += ") VALUES (NULL";
+                    query += ", ?".repeat(numColumns - 1 + tank.fields.length);
+                    query += ")";
+
+                    this.db.prepare(query)
+                           .run(tankNum,
+                                new Date().toString(),
+                                tank.loc.room,
+                                tank.loc.rack,
+                                SQLiteDatabase.atoi(tank.loc.row),
+                                tank.loc.col,
+                                tank.genotypes,
+                                ...data);
+
                 }
             )
         }
