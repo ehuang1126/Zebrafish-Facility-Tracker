@@ -94,11 +94,6 @@ abstract class Database {
     abstract getRacks(): Rack[];
 
     /**
-     * Writes a Location to the database.
-     */
-    abstract writeLocation(loc: Location): void;
-
-    /**
      * Returns a Map of genotype names to Genotypes.
      */
     abstract getGenotypes(): Map<string, Genotype>;

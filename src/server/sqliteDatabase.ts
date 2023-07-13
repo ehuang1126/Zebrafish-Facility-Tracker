@@ -63,11 +63,13 @@ class SQLiteDatabase extends Database {
      */
     private static dbToTank(row: any): Tank {
         const fields: Field[] = [];
+        const genotypes: string[] = [];
         for(const label in row) {
             if(label !== "room" && label !== "rack" && label !== "row_num" && label !== "col_num" &&
                 !label.includes("genotype_id") && label !== "tank_uid") {
                 fields.push({ label: label, data: row[label] });
             }
+            if(label.includes('genotype_id')) genotypes.push(row[label])
         }
 
         return {
@@ -77,7 +79,7 @@ class SQLiteDatabase extends Database {
                 row: SQLiteDatabase.itoa(row.row_num),
                 col: row.col_num
             },
-            genotypes: [row.genotype_id_1, row.genotype_id_2, row.genotype_id_3],
+            genotypes: genotypes,
             uid: row.tank_uid,
             fields: fields
         };
@@ -293,17 +295,6 @@ class SQLiteDatabase extends Database {
             )
         }
         return this._cullTank(tankNum, dead);
-    }
-
-    override writeLocation(loc: Location): void {
-        if(this._writeLocation === undefined) {
-            this._writeLocation = this.db.transaction(
-                (loc: Location): void => {
-                    throw new Error('Method not implemented.'); // TODO dependent on Location reimplementation
-                }
-            )
-        }
-        return this._writeLocation(loc);
     }
 
     override getChildren(parentId: string): Genotype[] {
