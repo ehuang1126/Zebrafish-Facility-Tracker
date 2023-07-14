@@ -279,13 +279,42 @@ class SQLiteDatabase extends Database {
     }
 
     /**
-     * Merges the specified Tank numbers into the new Tank.
+     * Merges the specified Tank numbers into the new Tank, saving
+     * the new Tank back to the database. Will default put the new Tank in the 
+     * Tank with the first UID's Location. 
      */
     override mergeTanks(uids: number[]): Tank {
         if(this._mergeTanks === undefined) {
             this._mergeTanks = this.db.transaction(
                 (uids: number[]): Tank => {
-                    throw new Error('Method not implemented.'); // dependent on fixing tank table to include multiple genotypes
+                    // get next free tank ID 
+                    let nextID: number = 0;
+                    while(this.readTank(nextID) !== undefined) nextID += 1;
+
+                    // remove from tanks table and concatenate genotypes/fields
+                    let genotypes: string[] = [];
+                    let fields: Field[] = [];
+                    let loc = undefined;
+                    for(let uid of uids) {
+                        let currTank = this.readTank(uid);
+                        if(currTank === undefined) {
+                            throw new Error(`Tank with uid ${uid} not found. `)
+                        }
+                        currTank = currTank as Tank;
+                        this.db.prepare("DELETE * FROM tanks WHERE tank_uid=?").run(uid);
+                        genotypes = genotypes.concat(currTank.genotypes);
+                        fields = fields.concat(currTank.fields);
+                        if(loc === undefined) loc = currTank.loc
+                    }
+                    loc = loc as Location;
+                    const newTank: Tank = {
+                        loc: loc,
+                        genotypes: genotypes,
+                        uid: nextID,
+                        fields: fields,
+                    };
+                    this.writeTank(newTank.uid, newTank);
+                    return newTank;
                 }
             )
         }
