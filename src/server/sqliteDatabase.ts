@@ -3,6 +3,11 @@ import type { CellValue, Field, Tank, Genotype, Location, Rack } from './databas
 import SQLite from 'better-sqlite3';
 import type { Database as SQLiteDB } from 'better-sqlite3';
 
+const DEFAULT_RACK_SIZE = {
+    width: 12,
+    height: 2,
+}
+
 const GENOTYPE_PAGE_NAME = 'genotype_ID'; // the name of the page that has genotype data
 
 const RACK_NAME_PREFIX = 'rack_'; // each page that represents a rack starts with this
@@ -249,7 +254,20 @@ class SQLiteDatabase extends Database {
         if(this._getRacks === undefined) {
             this._getRacks = this.db.transaction(
                 (): Rack[] => {
-                    throw new Error('Method not implemented.');
+                    const racks: Rack[] = [];
+                    const tanks: Tank[] = this.db.prepare("SELECT * FROM tanks").all().map(SQLiteDatabase.dbToTank);
+                    for(let tank of tanks) {
+                        if(racks.some((rack: Rack): boolean => { return rack.rackNum === tank.loc.rack })) {
+                            racks[tank.loc.rack].tanks.push(tank);
+                        } else {
+                            racks.push({
+                                rackNum: tank.loc.rack,
+                                size: DEFAULT_RACK_SIZE,
+                                tanks: [tank],
+                            })
+                        }
+                    }
+                    return racks;
                 }
             );
         }
