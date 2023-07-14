@@ -29,9 +29,8 @@ class SQLiteDatabase extends Database {
     private _findTank: (((loc: Location) => (Tank | undefined)) | undefined);
     private _getRacks: ((() => Rack[]) | undefined);
     private _getGenotypes: ((() => Map<string, Genotype>) | undefined);
-    private _mergeTanks: (((tankNums: number[], newTank: Tank) => void) | undefined)
-    private _cullTank: (((tankNum: number, dead?: boolean | undefined) => void) | undefined);
-    private _writeLocation: (((loc: Location) => void) | undefined);
+    private _mergeTanks: (((uids: number[]) => Tank) | undefined)
+    private _cullTank: (((uid: number) => void) | undefined);
     private _getChildren: (((parentId: string) => Genotype[]) | undefined);
 
     constructor(filename: string) {
@@ -282,28 +281,28 @@ class SQLiteDatabase extends Database {
     /**
      * Merges the specified Tank numbers into the new Tank.
      */
-    override mergeTanks(tankNums: number[], newTank: Tank): void {
+    override mergeTanks(uids: number[]): Tank {
         if(this._mergeTanks === undefined) {
             this._mergeTanks = this.db.transaction(
-                (tankNums: number[], newTank: Tank): void => {
+                (uids: number[]): Tank => {
                     throw new Error('Method not implemented.'); // dependent on fixing tank table to include multiple genotypes
                 }
             )
         }
-        return this._mergeTanks(tankNums, newTank);
+        return this._mergeTanks(uids);
     }
 
-    override cullTank(tankNum: number, dead?: boolean | undefined): void {
+    override cullTank(uid: number): void {
         if(this._cullTank === undefined) {
             this._cullTank = this.db.transaction(
-                (tankNum: number, dead?: boolean | undefined): void => {
-                    const tank = this.readTank(tankNum);
+                (uid: number): void => {
+                    const tank = this.readTank(uid);
                     if(tank === undefined) {
-                        throw new Error(`Tank with uid ${tankNum} cannot be found. `);
+                        throw new Error(`Tank with uid ${uid} cannot be found. `);
                     }
                     
                     // remove from tanks table
-                    this.db.prepare("DELETE * FROM tanks WHERE tank_uid=?").run(tankNum);
+                    this.db.prepare("DELETE * FROM tanks WHERE tank_uid=?").run(uid);
 
                     // insert into graveyard
                     const data = [];
@@ -324,7 +323,7 @@ class SQLiteDatabase extends Database {
                     query += ")";
 
                     this.db.prepare(query)
-                           .run(tankNum,
+                           .run(uid,
                                 new Date().toString(),
                                 tank.loc.room,
                                 tank.loc.rack,
@@ -333,10 +332,11 @@ class SQLiteDatabase extends Database {
                                 tank.genotypes,
                                 ...data);
 
+
                 }
             )
         }
-        return this._cullTank(tankNum, dead);
+        return this._cullTank(uid);
     }
 
     override getChildren(parentId: string): Genotype[] {

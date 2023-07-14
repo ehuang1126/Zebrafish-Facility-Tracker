@@ -78,15 +78,15 @@ abstract class Database {
     abstract findTank(loc: Location): (Tank | undefined);
 
     /**
-     * Merges the specified Tank numbers into the new Tank. 
+     * Merges the specified Tanks and returns the new Tank.
      */
-    abstract mergeTanks(tankNums: number[], newTank: Tank): void;
+    abstract mergeTanks(uids: number[]): Tank;
 
     /**
      * Culls a Tank, removing it from its rack and labeling genotype or clutch
      * ID as dead as necessary. 
      */
-    abstract cullTank(tankNum: number, dead?: boolean): void; 
+    abstract cullTank(uid: number): void; 
 
     /**
      * Returns an array of all the Racks.
@@ -112,8 +112,11 @@ abstract class Database {
         ipcMain.handle('db:readGenotype',  (event, uid: string): (Genotype | undefined) => this.readGenotype(uid));
         ipcMain.handle('db:writeGenotype', (event, genotype: Genotype): void => this.writeGenotype(genotype));
         ipcMain.handle('db:findTank',  (event, loc: Location): (Tank | undefined) => this.findTank(loc));
+        ipcMain.handle('db:mergeTanks', (event, uids: number[]): Tank => this.mergeTanks(uids));
+        ipcMain.handle('db:cullTank', (event, uid: number): void => this.cullTank(uid));
         ipcMain.handle('db:getRacks', (event): Rack[] => this.getRacks());
         ipcMain.handle('db:getGenotypes', (event): Map<string, Genotype> => this.getGenotypes());
+        ipcMain.handle('db:getChildren', (event, parentId: string): Genotype[] => this.getChildren(parentId));
     }
 
     /**
