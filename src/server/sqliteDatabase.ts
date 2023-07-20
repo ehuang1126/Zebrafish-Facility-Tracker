@@ -265,6 +265,7 @@ class SQLiteDatabase extends Database {
                                 size: DEFAULT_RACK_SIZE,
                                 tanks: [tank],
                             })
+                            racks.sort((a: Rack, b: Rack): number => { return a.rackNum - b.rackNum});
                         }
                     }
                     return racks;
@@ -306,7 +307,7 @@ class SQLiteDatabase extends Database {
             this._mergeTanks = this.db.transaction(
                 (uids: number[]): Tank => {
                     // get next free tank ID 
-                    let nextID: number = 0;
+                    let nextID: number = 1;
                     while(this.readTank(nextID) !== undefined) nextID += 1;
 
                     // remove from tanks table and concatenate genotypes/fields

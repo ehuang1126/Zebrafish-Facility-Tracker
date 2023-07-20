@@ -66,11 +66,11 @@ class TankViewer extends TabsViewer<Props, State> {
     /**
      * Saves the new genotype UID into the current state.
      */
-    private saveGenotype(genotype: string): void {
+    private saveGenotype(genotypes: string): void {
         this.setState((state: Readonly<State>): Readonly<State> => ({
             tank: state.tank !== undefined ? {
                 loc: state.tank.loc,
-                genotype: genotype,
+                genotypes: genotypes.replaceAll(' ', '').split(','), // parses by removing whitespace and splitting using commas
                 uid: state.tank.uid,
                 fields: state.tank.fields,
             } : undefined,
@@ -102,7 +102,7 @@ class TankViewer extends TabsViewer<Props, State> {
 
             const tank: Tank = {
                 loc: state.tank.loc,
-                genotype: state.tank.genotype,
+                genotypes: state.tank.genotypes,
                 uid: state.tank.uid,
                 fields: Array.from(state.tank.fields),
             }
@@ -151,7 +151,7 @@ class TankViewer extends TabsViewer<Props, State> {
                 const newState: State = {
                     tank: {
                         loc: state.tank.loc,
-                        genotype: state.tank.genotype,
+                        genotypes: state.tank.genotypes,
                         uid: state.tank.uid,
                         fields: [],
                     },
@@ -216,15 +216,17 @@ class TankViewer extends TabsViewer<Props, State> {
                     }
                 </Td>
             </Tr>,
-            <Tr key='genotype'>
+            <Tr key='genotypes'>
                 <Td>genotype ID</Td>
                 <Td>
                     { this.state.isEditing ?
-                        <Textarea value={ this.state.tank?.genotype } rows={ 1 }
+                        <Textarea value={ this.state.tank?.genotypes.toString() } rows={ 1 }
                                 onChange={ (e): void => this.saveGenotype(e.target.value) }
                         /> :
-                        this.state.tank?.genotype !== undefined ?
-                                this.props.jumpController.embedJumps('\\G' + this.state.tank.genotype) :
+                        this.state.tank?.genotypes !== undefined ?
+                                this.state.tank.genotypes.map((genotype: string): JSX.Element[] => {
+                                    return this.props.jumpController.embedJumps('\\G' + genotype)
+                                }) :
                                 undefined
                     }
                 </Td>
