@@ -1,3 +1,4 @@
+import xlsx from 'xlsx';
 import Database from './database';
 import type { CellValue, Field, Tank, Genotype, Location, Rack } from './database';
 import SQLite from 'better-sqlite3';
@@ -106,6 +107,66 @@ class SQLiteDatabase extends Database {
             tanks: []
         };
     }
+
+    /**
+     * reads a sheet and converts it to a map from genotype IDs to Genotype
+     * objects
+     */
+    private static sheetToGenotypes(sheet: xlsx.WorkSheet): Map<string, Genotype> {
+        const genotypes = new Map<string, Genotype>();
+        const sheetShape: (xlsx.Range | undefined) = sheet['!ref'] !== undefined ?
+                xlsx.utils.decode_range(sheet['!ref']) :
+                undefined;
+        const numRows: number = sheetShape?.e.r ?? 0;
+        const width: number = sheetShape?.e.c ?? 0;
+        
+        // parse the sheet
+        for(let r = 1; r < numRows; r++) {
+            const genotype: Genotype = {
+                uid: '!',
+                fields: [],
+                tanks: [],
+            };
+
+            // parse the row
+            for(let c = 0; c < width; c++) {
+                const label: (CellValue | undefined) = sheet[ xlsx.utils.encode_cell({ r: 0, c: c, }) ]?.w;
+                const data: (CellValue | undefined) = sheet[ xlsx.utils.encode_cell({ r: r, c: c, }) ]?.w;
+
+                if(label === GENOTYPE_ID_LABEL && data !== undefined) {
+                    genotype.uid = data.toString();
+                } else {
+                    genotype.fields.push({
+                        label: label ?? '',
+                        data: data ?? '',
+                    });
+                }
+            }
+
+            if(genotype.uid !== '!') {
+                genotypes.set(genotype.uid, genotype);
+            }
+        }
+
+        return genotypes;
+    }
+
+    /**
+     * reads a sheet from the csv and stores the racks
+     */
+    private static sheetToRack(db: xlsx.WorkBook, rackNum: number): Map<number, Rack> {
+        throw new Error('Method not implemented.');
+    }
+
+    /**
+     * reads a sheet from the csv and stores the tanks
+     */
+    private static sheetToTanks(sheet: xlsx.WorkBook): Map<number, Tank> {
+        const tanks: Map<number, Tank> = new Map();
+        return tanks;
+        throw new Error('Method not implemented.');
+    }
+
 
     /**
      * Returns a Tank object representing the tank with the given UID and
@@ -245,6 +306,10 @@ class SQLiteDatabase extends Database {
             );
         }
         return this._findTank(loc);
+    }
+
+    override writeRack(rack: Rack): void {
+        
     }
 
     /**

@@ -9,6 +9,7 @@ type Field = {
 type Tank = {
     loc: Location,
     genotypes: string[],
+    DOBS: Date[],
     uid: number,
     fields: Field[],
 };
@@ -89,6 +90,11 @@ abstract class Database {
     abstract cullTank(uid: number): void; 
 
     /**
+     * Writes a new Rack to the database. 
+     */
+    abstract writeRack(rack: Rack): void;
+
+    /**
      * Returns an array of all the Racks.
      */
     abstract getRacks(): Rack[];
@@ -114,6 +120,7 @@ abstract class Database {
         ipcMain.handle('db:findTank',  (event, loc: Location): (Tank | undefined) => this.findTank(loc));
         ipcMain.handle('db:mergeTanks', (event, uids: number[]): Tank => this.mergeTanks(uids));
         ipcMain.handle('db:cullTank', (event, uid: number): void => this.cullTank(uid));
+        ipcMain.handle('db:writeRack', (event, rack: Rack): void => this.writeRack(rack));
         ipcMain.handle('db:getRacks', (event): Rack[] => this.getRacks());
         ipcMain.handle('db:getGenotypes', (event): Map<string, Genotype> => this.getGenotypes());
         ipcMain.handle('db:getChildren', (event, parentId: string): Genotype[] => this.getChildren(parentId));

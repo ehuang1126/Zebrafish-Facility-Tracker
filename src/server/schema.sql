@@ -30,14 +30,23 @@ CREATE TABLE IF NOT EXISTS genotypes (
 CREATE TABLE IF NOT EXISTS tanks (
     db_id INTEGER PRIMARY KEY AUTOINCREMENT, -- consider removing AUTOINCREMENT to trade possible stability for performance
     tank_uid INTEGER,
-    room TEXT,
     rack INTEGER,
     row_num INTEGER,
     col_num INTEGER,
     genotype_id_1 TEXT,
     genotype_id_2 TEXT,
-    genotype_id_3 TEXT
+    genotype_id_3 TEXT,
+    DOB_1 DATE,
+    DOB_2 DATE,
+    DOB_3 DATE
 );
+
+CREATE TABLE IF NOT EXISTS racks (
+    rack_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    room TEXT,
+    rows INTEGER,
+    cols INTEGER
+)
 
 CREATE TABLE IF NOT EXISTS users (
     db_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -46,14 +55,16 @@ CREATE TABLE IF NOT EXISTS users (
 )
 
 CREATE TABLE IF NOT EXISTS graveyard (
-    db_if INTEGER PRIMARY KEY AUTOINCREMENT,
+    db_id INTEGER PRIMARY KEY AUTOINCREMENT,
     tank_uid INTEGER,
     cull_date DATE,
-    room TEXT,
     rack INTEGER,
     row_num INTEGER,
     col_num INTEGER,
     genotype_id_1 TEXT,
     genotype_id_2 TEXT,
-    genotype_id_3 TEXT
+    genotype_id_3 TEXT,
+    DOB_1 DATE,
+    DOB_2 DATE,
+    DOB_3 DATE
 )
