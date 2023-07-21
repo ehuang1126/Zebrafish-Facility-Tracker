@@ -9,13 +9,14 @@ type Field = {
 type Tank = {
     loc: Location,
     genotypes: string[],
-    DOBS: Date[],
+    dobs: Date[],
     uid: number,
     fields: Field[],
 };
 
 type Rack = {
     rackNum: number,
+    room: string,
     size: {
         width: number,
         height: number,

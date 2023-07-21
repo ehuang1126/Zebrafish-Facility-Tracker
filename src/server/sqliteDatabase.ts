@@ -4,18 +4,14 @@ import type { CellValue, Field, Tank, Genotype, Location, Rack } from './databas
 import SQLite from 'better-sqlite3';
 import type { Database as SQLiteDB } from 'better-sqlite3';
 
-const DEFAULT_RACK_SIZE = {
-    width: 12,
-    height: 2,
-}
-
 const GENOTYPE_PAGE_NAME = 'genotype_ID'; // the name of the page that has genotype data
-
-const RACK_NAME_PREFIX = 'rack_'; // each page that represents a rack starts with this
+const TANK_ID_LABEL = 'tank ID'
+const RACK_LABEL = 'rack'; // each page that represents a rack starts with this
 const ROW_LABEL = 'row'; // the column header for the `row` column
 const COL_LABEL = 'column'; // the column header for the `col` column
 const TANK_GENOTYPE_LABEL = 'ID-'; // the column header for a Tank's genotype ID
 const UID_LABEL = 'sort'; // the column header for the tank UIDs
+const TANK_DOBS_LABEL = 'DOB(s)';
 const GENOTYPE_ID_LABEL = 'genotypeID'; // the column header for a genotype's ID
 
 class SQLiteDatabase extends Database {
@@ -33,6 +29,7 @@ class SQLiteDatabase extends Database {
     private _readGenotype: (((uid: string) => (Genotype | undefined)) | undefined);
     private _writeGenotype: (((genotype: Genotype) => void) | undefined);
     private _findTank: (((loc: Location) => (Tank | undefined)) | undefined);
+    private _writeRack: (((rack: Rack) => void) | undefined);
     private _getRacks: ((() => Rack[]) | undefined);
     private _getGenotypes: ((() => Map<string, Genotype>) | undefined);
     private _mergeTanks: (((uids: number[]) => Tank) | undefined)
@@ -64,17 +61,34 @@ class SQLiteDatabase extends Database {
     }
 
     /**
+     * Converts an object returned from the SQLite3 library into a Rack, WITHOUT populating its tanks.
+     */
+    private static dbToRack(row: any): Rack {
+        return {
+            rackNum: row[0],
+            room: row[1],
+            size: {
+                width: row[2],
+                height: row[3],
+            },
+            tanks: []
+        }
+    }
+
+    /**
      * Converts an object returned from the SQLite3 library into a Tank.
      */
     private static dbToTank(row: any): Tank {
         const fields: Field[] = [];
         const genotypes: string[] = [];
+        const dobs: Date[] = [];
         for(const label in row) {
-            if(label !== "room" && label !== "rack" && label !== "row_num" && label !== "col_num" &&
+            if(label !== "DOB" && label !== "rack" && label !== "row_num" && label !== "col_num" &&
                 !label.includes("genotype_id") && label !== "tank_uid") {
                 fields.push({ label: label, data: row[label] });
             }
-            if(label.includes('genotype_id')) genotypes.push(row[label])
+            if(label.includes('genotype_id')) genotypes.push(row[label]);
+            if(label.includes('DOB')) dobs.push(row[label]); // TODO: check that the sqlite Date and built-in Date classes work together
         }
 
         return {
@@ -85,6 +99,7 @@ class SQLiteDatabase extends Database {
                 col: row.col_num
             },
             genotypes: genotypes,
+            dobs: dobs,
             uid: row.tank_uid,
             fields: fields
         };
@@ -152,19 +167,89 @@ class SQLiteDatabase extends Database {
     }
 
     /**
-     * reads a sheet from the csv and stores the racks
+     * reads a sheet from the csv and stores the racks. should be called before sheetToTanks
+     * so that the racks can populate tanks properly. 
      */
-    private static sheetToRack(db: xlsx.WorkBook, rackNum: number): Map<number, Rack> {
-        throw new Error('Method not implemented.');
+    private static sheetToRack(sheet: xlsx.WorkSheet): Map<number, Rack> {
+        const racks: Map<number, Rack> = new Map();
+        const sheetShape: (xlsx.Range | undefined) = sheet['!ref'] !== undefined ?
+                xlsx.utils.decode_range(sheet['!ref']) :
+                undefined;
+        const numRows: number = sheetShape?.e.r ?? 0;
+        const width: number = sheetShape?.e.c ?? 0;
+
+        if(width !== 4) {
+            throw new Error('bad racks sheet width');
+        }
+        
+        // parse the sheet
+        for(let r = 1; r < numRows; r++) {
+            const rack: Rack = {
+                rackNum: sheet[ xlsx.utils.encode_cell({ r: r, c: 0, }) ]?.w,
+                room: sheet[ xlsx.utils.encode_cell({ r: r, c: 1, }) ]?.w,
+                size: {
+                    width: sheet[ xlsx.utils.encode_cell({ r: r, c: 2, }) ]?.w,
+                    height: sheet[ xlsx.utils.encode_cell({ r: r, c: 3, }) ]?.w,
+                },
+                tanks: [], // initialize as empty for now
+            }
+            racks.set(rack.rackNum, rack);
+        }
+
+        return racks;
     }
 
     /**
      * reads a sheet from the csv and stores the tanks
      */
-    private static sheetToTanks(sheet: xlsx.WorkBook): Map<number, Tank> {
+    private static sheetToTanks(sheet: xlsx.WorkSheet): Map<number, Tank> {
         const tanks: Map<number, Tank> = new Map();
+        const sheetShape: (xlsx.Range | undefined) = sheet['!ref'] !== undefined ?
+                xlsx.utils.decode_range(sheet['!ref']) :
+                undefined;
+        const numRows: number = sheetShape?.e.r ?? 0;
+        const width: number = sheetShape?.e.c ?? 0;
+        
+        // parse the sheet
+        for(let r = 1; r < numRows; r++) {
+            const tank: Tank = {
+                uid: -1,
+                genotypes: [],
+                dobs: [],
+                loc: {
+                    room: '',
+                    rack: -1,
+                    row: '',
+                    col: -1,
+                },
+                fields: []
+            }
+            // parse the row
+            for(let c = 0; c < width; c++) {
+                const label: (CellValue | undefined) = sheet[ xlsx.utils.encode_cell({ r: 0, c: c, }) ]?.w;
+                const data: (CellValue | undefined) = sheet[ xlsx.utils.encode_cell({ r: r, c: c, }) ]?.w;
+
+                if(label === RACK_LABEL && data !== undefined) {
+                    tank.loc.rack = Number(data);
+                } else if(label === ROW_LABEL && data !== undefined) {
+                    tank.loc.row = data.toString();
+                } else if(label === COL_LABEL && data !== undefined) {
+                    tank.loc.col = Number(data);
+                } else if(label === TANK_GENOTYPE_LABEL && data !== undefined) {
+                    tank.genotypes = data.toString().split(', ');
+                } else if(label === TANK_DOBS_LABEL && data !== undefined) {
+                    tank.dobs = data.toString().split(', ').map((value: string): Date => new Date(value)); // TODO: check this works
+                } else if(label === TANK_ID_LABEL) {
+                    tank.uid = Number(data);
+                } else {
+                    tank.fields.push({
+                        label: label ?? '',
+                        data: data ?? '',
+                    });
+                }
+            }
+        }
         return tanks;
-        throw new Error('Method not implemented.');
     }
 
 
@@ -309,7 +394,14 @@ class SQLiteDatabase extends Database {
     }
 
     override writeRack(rack: Rack): void {
-        
+        if(this._writeRack === undefined) {
+            this._writeRack = this.db.transaction(
+                (rack: Rack): void => {
+                    this.db.prepare("INSERT INTO racks VALUES (NULL, ?, ?, ?)").run(rack.rackNum, rack.room, rack.size.width, rack.size.height);
+                }
+            )
+        }
+        return this._writeRack(rack);
     }
 
     /**
@@ -319,19 +411,11 @@ class SQLiteDatabase extends Database {
         if(this._getRacks === undefined) {
             this._getRacks = this.db.transaction(
                 (): Rack[] => {
-                    const racks: Rack[] = [];
+                    const racks: Rack[] = this.db.prepare("SELECT * FROM racks").all().map(SQLiteDatabase.dbToRack);
+                    // populate tanks
                     const tanks: Tank[] = this.db.prepare("SELECT * FROM tanks").all().map(SQLiteDatabase.dbToTank);
                     for(let tank of tanks) {
-                        if(racks.some((rack: Rack): boolean => { return rack.rackNum === tank.loc.rack })) {
-                            racks[tank.loc.rack].tanks.push(tank);
-                        } else {
-                            racks.push({
-                                rackNum: tank.loc.rack,
-                                size: DEFAULT_RACK_SIZE,
-                                tanks: [tank],
-                            })
-                            racks.sort((a: Rack, b: Rack): number => { return a.rackNum - b.rackNum});
-                        }
+                        racks[tank.loc.rack].tanks.push(tank);
                     }
                     return racks;
                 }
@@ -377,6 +461,7 @@ class SQLiteDatabase extends Database {
 
                     // remove from tanks table and concatenate genotypes/fields
                     let genotypes: string[] = [];
+                    let dobs: Date[] = [];
                     let fields: Field[] = [];
                     let loc = undefined;
                     for(let uid of uids) {
@@ -387,6 +472,7 @@ class SQLiteDatabase extends Database {
                         currTank = currTank as Tank;
                         this.db.prepare("DELETE * FROM tanks WHERE tank_uid=?").run(uid);
                         genotypes = genotypes.concat(currTank.genotypes);
+                        dobs = dobs.concat(currTank.dobs);
                         fields = fields.concat(currTank.fields);
                         if(loc === undefined) loc = currTank.loc
                     }
@@ -394,6 +480,7 @@ class SQLiteDatabase extends Database {
                     const newTank: Tank = {
                         loc: loc,
                         genotypes: genotypes,
+                        dobs: dobs,
                         uid: nextID,
                         fields: fields,
                     };
