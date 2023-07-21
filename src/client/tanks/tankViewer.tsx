@@ -71,6 +71,7 @@ class TankViewer extends TabsViewer<Props, State> {
             tank: state.tank !== undefined ? {
                 loc: state.tank.loc,
                 genotypes: genotypes.replaceAll(' ', '').split(','), // parses by removing whitespace and splitting using commas
+                dobs: state.tank.dobs,
                 uid: state.tank.uid,
                 fields: state.tank.fields,
             } : undefined,
@@ -103,6 +104,7 @@ class TankViewer extends TabsViewer<Props, State> {
             const tank: Tank = {
                 loc: state.tank.loc,
                 genotypes: state.tank.genotypes,
+                dobs: state.tank.dobs,
                 uid: state.tank.uid,
                 fields: Array.from(state.tank.fields),
             }
@@ -152,6 +154,7 @@ class TankViewer extends TabsViewer<Props, State> {
                     tank: {
                         loc: state.tank.loc,
                         genotypes: state.tank.genotypes,
+                        dobs: state.tank.dobs,
                         uid: state.tank.uid,
                         fields: [],
                     },
@@ -217,7 +220,7 @@ class TankViewer extends TabsViewer<Props, State> {
                 </Td>
             </Tr>,
             <Tr key='genotypes'>
-                <Td>genotype ID</Td>
+                <Td>genotype IDs</Td>
                 <Td>
                     { this.state.isEditing ?
                         <Textarea value={ this.state.tank?.genotypes.toString() } rows={ 1 }
@@ -229,6 +232,14 @@ class TankViewer extends TabsViewer<Props, State> {
                                 }) :
                                 undefined
                     }
+                </Td>
+            </Tr>,
+            <Tr key='dobs'>
+                <Td>DOB(s)</Td>
+                <Td>
+                {
+                    // TODO: implement
+                }
                 </Td>
             </Tr>
         ];
