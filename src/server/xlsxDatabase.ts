@@ -133,6 +133,7 @@ class XLSXDatabase extends Database {
                 0;
         const rack: Rack = {
             rackNum: rackNum,
+            room: '',
             size: XLSXDatabase.getRackShape(db, rackName),
             tanks: [],
         };
@@ -175,6 +176,7 @@ class XLSXDatabase extends Database {
                 row: '!',
                 col: -1,
             },
+            dobs: [],
             genotypes: ['!'],
             uid: -1,
             fields: [],

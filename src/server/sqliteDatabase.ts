@@ -4,7 +4,9 @@ import type { CellValue, Field, Tank, Genotype, Location, Rack } from './databas
 import SQLite from 'better-sqlite3';
 import type { Database as SQLiteDB } from 'better-sqlite3';
 
-const GENOTYPE_PAGE_NAME = 'genotype_ID'; // the name of the page that has genotype data
+const GENOTYPES_PAGE_NAME = 'genotypes'; // the name of the page that has genotype data
+const RACKS_PAGE_NAME = 'racks';
+const TANKS_PAGE_NAME = 'tanks'
 const TANK_ID_LABEL = 'tank ID'
 const RACK_LABEL = 'rack'; // each page that represents a rack starts with this
 const ROW_LABEL = 'row'; // the column header for the `row` column
@@ -36,11 +38,24 @@ class SQLiteDatabase extends Database {
     private _cullTank: (((uid: number) => void) | undefined);
     private _getChildren: (((parentId: string) => Genotype[]) | undefined);
 
-    constructor(filename: string) {
+    constructor(filename: string, importFile?: string) {
         super();
-
+        
         this.db = new SQLite(filename, { fileMustExist: true });
         this.db.pragma('journal_mode = WAL');
+        if(importFile !== undefined) {
+            this.importFromXLSX(importFile);
+        }
+    }
+
+    private importFromXLSX(filename: string): void {
+        const data: xlsx.WorkBook = xlsx.readFile(filename);
+        const genotypesPage: (xlsx.WorkSheet | undefined) = data.Sheets[GENOTYPES_PAGE_NAME];
+        const racksPage: (xlsx.WorkSheet | undefined) = data.Sheets[RACKS_PAGE_NAME];
+        const tanksPage: (xlsx.WorkSheet | undefined) = data.Sheets[TANKS_PAGE_NAME];
+        SQLiteDatabase.sheetToRacks(racksPage).forEach((rack: Rack): void => {this.writeRack(rack);});
+        SQLiteDatabase.sheetToGenotypes(genotypesPage).forEach((genotype: Genotype): void => {this.writeGenotype(genotype);});
+        SQLiteDatabase.sheetToTanks(tanksPage).forEach((tank: Tank, uid: number): void => {this.writeTank(uid, tank);});
     }
 
     /**
@@ -133,7 +148,7 @@ class SQLiteDatabase extends Database {
                 xlsx.utils.decode_range(sheet['!ref']) :
                 undefined;
         const numRows: number = sheetShape?.e.r ?? 0;
-        const width: number = sheetShape?.e.c ?? 0;
+        const width: number = (sheetShape?.e.c ?? -1) + 1;
         
         // parse the sheet
         for(let r = 1; r < numRows; r++) {
@@ -170,16 +185,16 @@ class SQLiteDatabase extends Database {
      * reads a sheet from the csv and stores the racks. should be called before sheetToTanks
      * so that the racks can populate tanks properly. 
      */
-    private static sheetToRack(sheet: xlsx.WorkSheet): Map<number, Rack> {
+    private static sheetToRacks(sheet: xlsx.WorkSheet): Map<number, Rack> {
         const racks: Map<number, Rack> = new Map();
         const sheetShape: (xlsx.Range | undefined) = sheet['!ref'] !== undefined ?
                 xlsx.utils.decode_range(sheet['!ref']) :
                 undefined;
         const numRows: number = sheetShape?.e.r ?? 0;
-        const width: number = sheetShape?.e.c ?? 0;
+        const width: number = (sheetShape?.e.c ?? -1) + 1;
 
         if(width !== 4) {
-            throw new Error('bad racks sheet width');
+            throw new Error(`bad racks width of ${width}`);
         }
         
         // parse the sheet
@@ -354,17 +369,16 @@ class SQLiteDatabase extends Database {
         if(this._writeGenotype === undefined) {
             this._writeGenotype = this.db.transaction(
                 (genotype: Genotype): void => {
-
                     const data = [];
                     let query: string = "INSERT INTO genotypes (db_id, genotype_id";
-                    for(const label in genotype.fields) {
-                        query += ", " + label;
-                        data.push(genotype.fields[label]);
+                    for(let field of genotype.fields) {
+                        query += ", " + field.label.toString().replaceAll(' ', '_');
+                        data.push(genotype.fields[genotype.fields.indexOf(field)]);
                     }
                     query += ") VALUES (NULL";
                     query += ", ?".repeat(1 + genotype.fields.length);
                     query += ")";
-
+                    //throw new Error(`${query}`)
                     this.db.prepare(query)
                            .run(genotype.uid,
                                 ...data);
@@ -397,7 +411,7 @@ class SQLiteDatabase extends Database {
         if(this._writeRack === undefined) {
             this._writeRack = this.db.transaction(
                 (rack: Rack): void => {
-                    this.db.prepare("INSERT INTO racks VALUES (NULL, ?, ?, ?)").run(rack.rackNum, rack.room, rack.size.width, rack.size.height);
+                    this.db.prepare("INSERT INTO racks VALUES (NULL, ?, ?, ?)").run(rack.room, rack.size.width, rack.size.height);
                 }
             )
         }

@@ -46,13 +46,13 @@ CREATE TABLE IF NOT EXISTS racks (
     room TEXT,
     rows INTEGER,
     cols INTEGER
-)
+);
 
 CREATE TABLE IF NOT EXISTS users (
     db_id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER
     -- add settings/preferences as necessary
-)
+);
 
 CREATE TABLE IF NOT EXISTS graveyard (
     db_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -67,4 +67,4 @@ CREATE TABLE IF NOT EXISTS graveyard (
     DOB_1 DATE,
     DOB_2 DATE,
     DOB_3 DATE
-)
+);
