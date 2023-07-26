@@ -22,7 +22,7 @@ function createWindow(): void {
 
 // run once initialized
 app.whenReady().then((): void => {
-    new SQLiteDatabase(path.join(__dirname, '..', 'data', 'sqlite3.db')).attachHandlers(ipcMain);
+    new SQLiteDatabase(path.join(__dirname, '..', 'data', 'sqlite3.db'), path.join(__dirname, '..', 'data', 'standardized_input_example.xlsx')).attachHandlers(ipcMain);
 
     createWindow();
 
