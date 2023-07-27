@@ -40,7 +40,7 @@ class SQLiteDatabase extends Database {
 
     constructor(filename: string, importFile?: string) {
         super();
-        
+
         this.db = new SQLite(filename, { fileMustExist: true });
         this.db.pragma('journal_mode = WAL');
         if(importFile !== undefined) {
@@ -80,11 +80,11 @@ class SQLiteDatabase extends Database {
      */
     private static dbToRack(row: any): Rack {
         return {
-            rackNum: row[0],
-            room: row[1],
+            rackNum: row.rack_id,
+            room: row.room,
             size: {
-                width: row[2],
-                height: row[3],
+                width: row.rows,
+                height: row.cols,
             },
             tanks: []
         }
@@ -126,13 +126,13 @@ class SQLiteDatabase extends Database {
     private static dbToGenotype(row: any): Genotype {
         const fields: Field[] = [];
         for(const label in row) {
-            if(label !== "db_id" && label !== "genotype_id") {
+            if(label !== "db_id" && label !== "genotypeID") {
                 fields.push({ label: label, data: row[label] });
             }
         }
 
         return {
-            uid: row.genotype_id,
+            uid: row.genotypeID,
             fields: fields,
             tanks: []
         };
@@ -151,7 +151,7 @@ class SQLiteDatabase extends Database {
         const width: number = (sheetShape?.e.c ?? -1) + 1;
         
         // parse the sheet
-        for(let r = 1; r < numRows; r++) {
+        for(let r = 1; r <= numRows; r++) {
             const genotype: Genotype = {
                 uid: '!',
                 fields: [],
@@ -198,7 +198,7 @@ class SQLiteDatabase extends Database {
         }
         
         // parse the sheet
-        for(let r = 1; r < numRows; r++) {
+        for(let r = 1; r <= numRows; r++) {
             const rack: Rack = {
                 rackNum: sheet[ xlsx.utils.encode_cell({ r: r, c: 0, }) ]?.w,
                 room: sheet[ xlsx.utils.encode_cell({ r: r, c: 1, }) ]?.w,
@@ -226,7 +226,7 @@ class SQLiteDatabase extends Database {
         const width: number = sheetShape?.e.c ?? 0;
         
         // parse the sheet
-        for(let r = 1; r < numRows; r++) {
+        for(let r = 1; r <= numRows; r++) {
             const tank: Tank = {
                 uid: -1,
                 genotypes: [],
@@ -343,8 +343,7 @@ class SQLiteDatabase extends Database {
         if(this._readGenotype === undefined) {
             this._readGenotype = this.db.transaction(
                 (uid: string): (Genotype | undefined) => {
-
-                    const genotype: any = this.db.prepare("SELECT * FROM genotypes WHERE genotype_id=?")
+                    const genotype: any = this.db.prepare("SELECT * FROM genotypes WHERE genotypeID=?")
                                                  .get(uid);
                     if(genotype === undefined) {
                         return undefined;
@@ -370,15 +369,21 @@ class SQLiteDatabase extends Database {
             this._writeGenotype = this.db.transaction(
                 (genotype: Genotype): void => {
                     const data = [];
-                    let query: string = "INSERT INTO genotypes (db_id, genotype_id";
+                    let query: string = "INSERT INTO genotypes (db_id, genotypeID";
                     for(let field of genotype.fields) {
-                        query += ", " + field.label.toString().replaceAll(' ', '_');
-                        data.push(genotype.fields[genotype.fields.indexOf(field)]);
+                        // remove all spaces from label so that query works as intended
+                        let label = field.label.toString().replaceAll(' ', '_'); 
+                        query += ", " + label;
+                        // check that the column exists. if not, add it to the table
+                        if(!this.db.prepare("SELECT * FROM genotypes").columns().map((column): string => column.name.toLowerCase())
+                            .includes(label.toLowerCase())) {
+                                this.db.prepare(`ALTER TABLE genotypes ADD COLUMN \"${label}\"`).run();
+                        }
+                        data.push(genotype.fields[genotype.fields.indexOf(field)].data);
                     }
                     query += ") VALUES (NULL";
                     query += ", ?".repeat(1 + genotype.fields.length);
                     query += ")";
-                    //throw new Error(`${query}`)
                     this.db.prepare(query)
                            .run(genotype.uid,
                                 ...data);
@@ -411,7 +416,7 @@ class SQLiteDatabase extends Database {
         if(this._writeRack === undefined) {
             this._writeRack = this.db.transaction(
                 (rack: Rack): void => {
-                    this.db.prepare("INSERT INTO racks VALUES (NULL, ?, ?, ?)").run(rack.room, rack.size.width, rack.size.height);
+                    this.db.prepare("INSERT INTO racks VALUES (?, ?, ?, ?)").run(rack.rackNum, rack.room, rack.size.width, rack.size.height);
                 }
             )
         }
@@ -446,7 +451,7 @@ class SQLiteDatabase extends Database {
             this._getGenotypes = this.db.transaction(
                 (): Map<string, Genotype> => {
                     const ret: Map<string, Genotype> = new Map<string, Genotype>();
-                    const ids: any[] = this.db.prepare("SELECT genotype_id FROM genotypes").all()
+                    const ids: string[] = this.db.prepare("SELECT genotypeID FROM genotypes").all().map((id: any): string => id.genotypeID);
                     for(let uid of ids) {
                         let currGenotype = this.readGenotype(uid);
                         if(currGenotype !== undefined) {
