@@ -1,7 +1,7 @@
 -- any changes here will probably need to be paired with appropriate changes in sqliteDatabase.ts
 CREATE TABLE IF NOT EXISTS genotypes (
     db_id INTEGER PRIMARY KEY AUTOINCREMENT, -- consider removing AUTOINCREMENT to trade possible stability for performance
-    genotype_id INTEGER NOT NULL,
+    genotypeID INTEGER NOT NULL,
     published_id TEXT,
 --    owner TEXT NOT NULL,
     fish TEXT NOT NULL,
