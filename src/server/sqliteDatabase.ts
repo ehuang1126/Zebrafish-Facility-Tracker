@@ -7,11 +7,11 @@ import type { Database as SQLiteDB } from 'better-sqlite3';
 const GENOTYPES_PAGE_NAME = 'genotypes'; // the name of the page that has genotype data
 const RACKS_PAGE_NAME = 'racks';
 const TANKS_PAGE_NAME = 'tanks'
-const TANK_ID_LABEL = 'tank ID'
+const TANK_ID_LABEL = 'tankID'
 const RACK_LABEL = 'rack'; // each page that represents a rack starts with this
 const ROW_LABEL = 'row'; // the column header for the `row` column
 const COL_LABEL = 'column'; // the column header for the `col` column
-const TANK_GENOTYPE_LABEL = 'ID-'; // the column header for a Tank's genotype ID
+const TANK_GENOTYPE_LABEL = 'genotypeID(s)'; // the column header for a Tank's genotype ID
 const UID_LABEL = 'sort'; // the column header for the tank UIDs
 const TANK_DOBS_LABEL = 'DOB(s)';
 const GENOTYPE_ID_LABEL = 'genotypeID'; // the column header for a genotype's ID
@@ -84,7 +84,7 @@ class SQLiteDatabase extends Database {
             room: row.room,
             size: {
                 width: row.rows,
-                height: row.cols,
+                height: row.columns,
             },
             tanks: []
         }
@@ -223,7 +223,7 @@ class SQLiteDatabase extends Database {
                 xlsx.utils.decode_range(sheet['!ref']) :
                 undefined;
         const numRows: number = sheetShape?.e.r ?? 0;
-        const width: number = sheetShape?.e.c ?? 0;
+        const width: number = (sheetShape?.e.c ?? -1) + 1;
         
         // parse the sheet
         for(let r = 1; r <= numRows; r++) {
@@ -241,6 +241,7 @@ class SQLiteDatabase extends Database {
             }
             // parse the row
             for(let c = 0; c < width; c++) {
+                
                 const label: (CellValue | undefined) = sheet[ xlsx.utils.encode_cell({ r: 0, c: c, }) ]?.w;
                 const data: (CellValue | undefined) = sheet[ xlsx.utils.encode_cell({ r: r, c: c, }) ]?.w;
 
@@ -254,7 +255,7 @@ class SQLiteDatabase extends Database {
                     tank.genotypes = data.toString().split(', ');
                 } else if(label === TANK_DOBS_LABEL && data !== undefined) {
                     tank.dobs = data.toString().split(', ').map((value: string): Date => new Date(value)); // TODO: check this works
-                } else if(label === TANK_ID_LABEL) {
+                } else if(label === TANK_ID_LABEL && data !== undefined) {
                     tank.uid = Number(data);
                 } else {
                     tank.fields.push({
@@ -263,6 +264,7 @@ class SQLiteDatabase extends Database {
                     });
                 }
             }
+            tanks.set(tank.uid, tank);
         }
         return tanks;
     }
@@ -304,29 +306,58 @@ class SQLiteDatabase extends Database {
             this._writeTank = this.db.transaction(
                 (uid: number, tank: Tank): void => {
 
-                    const data = [];
-                    let query: string = "INSERT INTO tanks (db_id, tank_uid, room, rack, row_num, col_num";
-                    let numColumns: number = 6;
+                    const data = []; // compiled field data
+                    let query: string = "INSERT INTO tanks (tank_uid, rack, row_num, col_num";
+                    // track all genotypes
+
+                    let genotypeNum: number = 0;
                     for(let genotype of tank.genotypes) {
-                        numColumns += 1;
-                        query += ", " + `genotype_id_${numColumns - 6}`;
-                        data.push(genotype)
+                        genotypeNum++;
+                        query += ", " + `genotype_id_${genotypeNum}`;
+
+                        // check that there are enough genotype columns in the table. if not, add more columns.
+                        let numGenotypeCols: number = this.db.prepare("SELECT * FROM tanks").columns().map((column): number => column.name.includes('genotype_id_') ? 1 : 0)
+                            .reduce((prev: number, next: number): number => prev + next)
+                        if(numGenotypeCols < genotypeNum) {
+                                this.db.prepare(`ALTER TABLE tanks ADD COLUMN \"DOB_${genotypeNum}\"`).run();
+                        }
                     }
-                    for(const label in tank.fields) {
+                    // track all DOBs
+                    let DOBnum: number = 0;
+                    for(let dob of tank.dobs) {
+                        DOBnum++;
+                        query += ", " + `DOB_${DOBnum}`;
+
+                        // check that there are enough DOB columns in the table. if not, add more columns.
+                        let numDOBCols: number = this.db.prepare("SELECT * FROM tanks").columns().map((column): number => column.name.includes('DOB') ? 1 : 0)
+                            .reduce((prev: number, next: number): number => prev + next)
+                        if(numDOBCols < DOBnum) {
+                                this.db.prepare(`ALTER TABLE tanks ADD COLUMN \"DOB_${DOBnum}\"`).run();
+                        }
+                    }
+                    // track all fields
+                    for(const field of tank.fields) {
+                        // remove all spaces from label so that query works as intended
+                        let label: string = field.label.toString().replaceAll(' ', '_'); 
                         query += ", " + label;
-                        data.push(tank.fields[label]);
+                        data.push(tank.fields[tank.fields.indexOf(field)].data);
+                        // check that the column exists. if not, add it to the table
+                        if(!this.db.prepare("SELECT * FROM tanks").columns().map((column): string => column.name.toLowerCase())
+                            .includes(label.toLowerCase())) {
+                                this.db.prepare(`ALTER TABLE tanks ADD COLUMN \"${label}\"`).run();
+                        }
                     }
-                    query += ") VALUES (NULL";
-                    query += ", ?".repeat(numColumns - 1 + tank.fields.length);
+                    query += ") VALUES (?";
+                    query += ", ?".repeat(3 + tank.genotypes.length + tank.dobs.length + tank.fields.length);
                     query += ")";
 
                     this.db.prepare(query)
                            .run(uid,
-                                tank.loc.room,
                                 tank.loc.rack,
                                 SQLiteDatabase.atoi(tank.loc.row),
                                 tank.loc.col,
                                 tank.genotypes,
+                                tank.dobs.map((date: Date): string => date.toString()),
                                 ...data);
 
                 }
@@ -372,7 +403,7 @@ class SQLiteDatabase extends Database {
                     let query: string = "INSERT INTO genotypes (db_id, genotypeID";
                     for(let field of genotype.fields) {
                         // remove all spaces from label so that query works as intended
-                        let label = field.label.toString().replaceAll(' ', '_'); 
+                        let label: string = field.label.toString().replaceAll(' ', '_'); 
                         query += ", " + label;
                         // check that the column exists. if not, add it to the table
                         if(!this.db.prepare("SELECT * FROM genotypes").columns().map((column): string => column.name.toLowerCase())
@@ -403,8 +434,8 @@ class SQLiteDatabase extends Database {
             this._findTank = this.db.transaction(
                 (loc: Location): (Tank | undefined) => {
 
-                    return SQLiteDatabase.dbToTank(this.db.prepare("SELECT * FROM tanks WHERE room=? AND rack=? AND row_num=? AND col_num=?")
-                                  .get(loc.room, loc.rack, SQLiteDatabase.atoi(loc.row), loc.col));
+                    return SQLiteDatabase.dbToTank(this.db.prepare("SELECT * FROM tanks WHERE rack=? AND row_num=? AND col_num=?")
+                                  .get(loc.rack, SQLiteDatabase.atoi(loc.row), loc.col));
 
                 }
             );
@@ -434,7 +465,7 @@ class SQLiteDatabase extends Database {
                     // populate tanks
                     const tanks: Tank[] = this.db.prepare("SELECT * FROM tanks").all().map(SQLiteDatabase.dbToTank);
                     for(let tank of tanks) {
-                        racks[tank.loc.rack].tanks.push(tank);
+                        racks.find((rack: Rack): boolean => rack.rackNum === tank.loc.rack)?.tanks.push(tank);
                     }
                     return racks;
                 }
