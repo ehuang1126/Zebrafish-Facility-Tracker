@@ -98,12 +98,12 @@ class SQLiteDatabase extends Database {
         const genotypes: string[] = [];
         const dobs: Date[] = [];
         for(const label in row) {
-            if(label !== "DOB" && label !== "rack" && label !== "row_num" && label !== "col_num" &&
+            if(!label.includes("DOB") && label !== "rack" && label !== "row_num" && label !== "col_num" &&
                 !label.includes("genotype_id") && label !== "tank_uid") {
                 fields.push({ label: label, data: row[label] });
             }
             if(label.includes('genotype_id')) genotypes.push(row[label]);
-            if(label.includes('DOB')) dobs.push(row[label]); // TODO: check that the sqlite Date and built-in Date classes work together
+            if(label.includes('DOB')) dobs.push(row[label]);
         }
 
         return {
@@ -126,7 +126,7 @@ class SQLiteDatabase extends Database {
     private static dbToGenotype(row: any): Genotype {
         const fields: Field[] = [];
         for(const label in row) {
-            if(label !== "db_id" && label !== "genotypeID") {
+            if(label !== "genotypeID" && label !== 'tanks') {
                 fields.push({ label: label, data: row[label] });
             }
         }
@@ -134,7 +134,7 @@ class SQLiteDatabase extends Database {
         return {
             uid: row.genotypeID,
             fields: fields,
-            tanks: []
+            tanks: row.tanks !== '' ? row.tanks.split(',').map(Number) : [],
         };
     }
 
@@ -254,7 +254,7 @@ class SQLiteDatabase extends Database {
                 } else if(label === TANK_GENOTYPE_LABEL && data !== undefined) {
                     tank.genotypes = data.toString().split(', ');
                 } else if(label === TANK_DOBS_LABEL && data !== undefined) {
-                    tank.dobs = data.toString().split(', ').map((value: string): Date => new Date(value)); // TODO: check this works
+                    tank.dobs = data.toString().split(', ').map((value: string): Date => new Date(value)); 
                 } else if(label === TANK_ID_LABEL && data !== undefined) {
                     tank.uid = Number(data);
                 } else {
@@ -307,9 +307,8 @@ class SQLiteDatabase extends Database {
                 (uid: number, tank: Tank): void => {
 
                     const data = []; // compiled field data
-                    let query: string = "INSERT INTO tanks (tank_uid, rack, row_num, col_num";
+                    let query: string = "INSERT OR REPLACE INTO tanks (tank_uid, rack, row_num, col_num";
                     // track all genotypes
-
                     let genotypeNum: number = 0;
                     for(let genotype of tank.genotypes) {
                         genotypeNum++;
@@ -320,6 +319,14 @@ class SQLiteDatabase extends Database {
                             .reduce((prev: number, next: number): number => prev + next)
                         if(numGenotypeCols < genotypeNum) {
                                 this.db.prepare(`ALTER TABLE tanks ADD COLUMN \"DOB_${genotypeNum}\"`).run();
+                        }
+                        // check that all genotypes exist and add tanks to those genotypes
+                        const genotypeObj: Genotype | undefined = this.readGenotype(genotype);
+                        if(genotypeObj === undefined) {
+                            throw new Error(`Genotype ${genotype} not found`)
+                        } else {
+                            genotypeObj.tanks.push(uid);
+                            this.writeGenotype(genotypeObj);
                         }
                     }
                     // track all DOBs
@@ -400,7 +407,7 @@ class SQLiteDatabase extends Database {
             this._writeGenotype = this.db.transaction(
                 (genotype: Genotype): void => {
                     const data = [];
-                    let query: string = "INSERT INTO genotypes (db_id, genotypeID";
+                    let query: string = "INSERT OR REPLACE INTO genotypes (genotypeID, tanks";
                     for(let field of genotype.fields) {
                         // remove all spaces from label so that query works as intended
                         let label: string = field.label.toString().replaceAll(' ', '_'); 
@@ -412,13 +419,13 @@ class SQLiteDatabase extends Database {
                         }
                         data.push(genotype.fields[genotype.fields.indexOf(field)].data);
                     }
-                    query += ") VALUES (NULL";
+                    query += ") VALUES (?";
                     query += ", ?".repeat(1 + genotype.fields.length);
                     query += ")";
                     this.db.prepare(query)
                            .run(genotype.uid,
+                                genotype.tanks.join(','),
                                 ...data);
-
                 }
             );
         }
@@ -447,7 +454,7 @@ class SQLiteDatabase extends Database {
         if(this._writeRack === undefined) {
             this._writeRack = this.db.transaction(
                 (rack: Rack): void => {
-                    this.db.prepare("INSERT INTO racks VALUES (?, ?, ?, ?)").run(rack.rackNum, rack.room, rack.size.width, rack.size.height);
+                    this.db.prepare("INSERT OR REPLACE INTO racks VALUES (?, ?, ?, ?)").run(rack.rackNum, rack.room, rack.size.width, rack.size.height);
                 }
             )
         }
