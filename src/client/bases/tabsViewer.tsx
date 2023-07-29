@@ -14,7 +14,7 @@ abstract class TabsViewer<P, S> extends React.Component<(P & Props), S> {
      * Excludes undefined, empty string, and 'nan'
      */
     private static cellValueNotEmpty(value: CellValue): boolean {
-        return (typeof value === 'number' || (value !== 'nan' && value.trim().length > 0));
+        return (typeof value === 'number' || (value !== 'nan' && value?.trim().length > 0));
     }
  
     /**
