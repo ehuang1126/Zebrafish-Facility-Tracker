@@ -1,8 +1,8 @@
 -- any changes here will probably need to be paired with appropriate changes in sqliteDatabase.ts
 CREATE TABLE IF NOT EXISTS genotypes (
-    db_id INTEGER PRIMARY KEY AUTOINCREMENT, -- consider removing AUTOINCREMENT to trade possible stability for performance
-    genotypeID INTEGER NOT NULL,
+    genotypeID INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     published_id TEXT,
+    tanks TEXT,
 --    owner TEXT NOT NULL,
     fish TEXT NOT NULL,
     notes TEXT
@@ -28,8 +28,7 @@ CREATE TABLE IF NOT EXISTS genotypes (
 );
 
 CREATE TABLE IF NOT EXISTS tanks (
-    db_id INTEGER PRIMARY KEY AUTOINCREMENT, -- consider removing AUTOINCREMENT to trade possible stability for performance
-    tank_uid INTEGER,
+    tank_uid INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     rack INTEGER,
     row_num INTEGER,
     col_num INTEGER,
@@ -49,8 +48,7 @@ CREATE TABLE IF NOT EXISTS racks (
 );
 
 CREATE TABLE IF NOT EXISTS users (
-    db_id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER
+    user_id INTEGER PRIMARY KEY AUTOINCREMENT
     -- add settings/preferences as necessary
 );
 
