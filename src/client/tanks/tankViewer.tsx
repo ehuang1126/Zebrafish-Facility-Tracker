@@ -11,6 +11,7 @@ type Props = {
 type State = {
     tank?: Tank,
     locString?: string,
+    dobsString?: string,
     isEditing: boolean,
 };
 
@@ -23,6 +24,7 @@ class TankViewer extends TabsViewer<Props, State> {
         this.state = {
             tank: undefined,
             locString: undefined,
+            dobsString: undefined,
             isEditing: false,
         };
     }
@@ -44,6 +46,7 @@ class TankViewer extends TabsViewer<Props, State> {
                 this.setState({
                     tank: tank,
                     locString: TankViewer.locToString(tank.loc),
+                    dobsString: TankViewer.dobsToString(tank.dobs),
                 });
             }
         })();
@@ -54,6 +57,16 @@ class TankViewer extends TabsViewer<Props, State> {
      */
     private static locToString(loc: Location): string {
         return `${loc.rack}${loc.row}${loc.col}`;
+    }
+
+    /**
+     * Converts an array of Dates into a human-readable and machine-parseable string.
+     */
+    private static dobsToString(dobs: Date[]): string {
+        return dobs.map((date: Date): string => {
+            date = new Date(date);
+            return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+        }).join(',\n');
     }
 
     /**
@@ -75,8 +88,15 @@ class TankViewer extends TabsViewer<Props, State> {
                 uid: state.tank.uid,
                 fields: state.tank.fields,
             } : undefined,
-            isEditing: this.state.isEditing,
+            isEditing: state.isEditing,
         }));
+    }
+
+    /**
+     * Saves the DOBs into the current state.
+     */
+    private saveDOBString(dobs: string): void {
+        this.setState({dobsString: dobs});
     }
 
     /**
@@ -154,12 +174,13 @@ class TankViewer extends TabsViewer<Props, State> {
                     tank: {
                         loc: state.tank.loc,
                         genotypes: state.tank.genotypes,
-                        dobs: state.tank.dobs,
+                        dobs: state.dobsString?.split(',').map((dob: string): Date => new Date(dob)) ?? [],
                         uid: state.tank.uid,
                         fields: [],
                     },
                     isEditing: !state.isEditing, // toggle editing
                     locString: state.locString,
+                    dobsString: state.dobsString,
                 };
 
                 // I don't know why this is necessary
@@ -237,9 +258,13 @@ class TankViewer extends TabsViewer<Props, State> {
             <Tr key='dobs'>
                 <Td>DOB(s)</Td>
                 <Td>
-                {
-                    // TODO: implement
-                }
+                    { this.state.isEditing ?
+                        <Textarea value={ this.state.dobsString } onChange={ (e): void => this.saveDOBString(e.target.value) }/> 
+                        :
+                        this.state.tank?.dobs !== undefined ?
+                                this.state.tank.dobs.map((date: Date): JSX.Element => <Text>{ new Date(date).toDateString() }</Text>)
+                            :   undefined
+                    }
                 </Td>
             </Tr>
         ];
