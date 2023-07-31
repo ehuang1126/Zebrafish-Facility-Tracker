@@ -12,7 +12,6 @@ const RACK_LABEL = 'rack'; // each page that represents a rack starts with this
 const ROW_LABEL = 'row'; // the column header for the `row` column
 const COL_LABEL = 'column'; // the column header for the `col` column
 const TANK_GENOTYPE_LABEL = 'genotypeID(s)'; // the column header for a Tank's genotype ID
-const UID_LABEL = 'sort'; // the column header for the tank UIDs
 const TANK_DOBS_LABEL = 'DOB(s)';
 const GENOTYPE_ID_LABEL = 'genotypeID'; // the column header for a genotype's ID
 
@@ -102,8 +101,8 @@ class SQLiteDatabase extends Database {
                 !label.includes("genotype_id") && label !== "tank_uid") {
                 fields.push({ label: label, data: row[label] });
             }
-            if(label.includes('genotype_id')) genotypes.push(row[label]);
-            if(label.includes('DOB')) dobs.push(row[label]);
+            if(label.includes('genotype_id') && row[label] !== null) genotypes.push(row[label]);
+            if(label.includes('DOB') && row[label] !== null) dobs.push(row[label]);
         }
 
         return {
@@ -318,7 +317,7 @@ class SQLiteDatabase extends Database {
                         let numGenotypeCols: number = this.db.prepare("SELECT * FROM tanks").columns().map((column): number => column.name.includes('genotype_id_') ? 1 : 0)
                             .reduce((prev: number, next: number): number => prev + next)
                         if(numGenotypeCols < genotypeNum) {
-                                this.db.prepare(`ALTER TABLE tanks ADD COLUMN \"DOB_${genotypeNum}\"`).run();
+                                this.db.prepare(`ALTER TABLE tanks ADD COLUMN \"genotype_id_${genotypeNum}\"`).run();
                         }
                         // check that all genotypes exist and add tanks to those genotypes
                         const genotypeObj: Genotype | undefined = this.readGenotype(genotype);
