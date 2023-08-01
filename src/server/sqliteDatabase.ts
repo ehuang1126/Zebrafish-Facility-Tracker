@@ -363,7 +363,7 @@ class SQLiteDatabase extends Database {
                                 SQLiteDatabase.atoi(tank.loc.row),
                                 tank.loc.col,
                                 tank.genotypes,
-                                tank.dobs.map((date: Date): string => date.toString()),
+                                tank.dobs.map((date: Date): string => new Date(date).toDateString()),
                                 ...data);
 
                 }
