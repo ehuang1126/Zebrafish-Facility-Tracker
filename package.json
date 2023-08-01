@@ -37,7 +37,8 @@
     "prestart": "npm run build",
     "start": "(BROWSER=none npm run react &) && sleep 3 && npm run electron",
     "poststart": "npm run kill",
-    "test": "react-scripts test"
+    "test": "react-scripts test",
+    "export": "./src/server/export_sqlite_to_csv.sh"
   },
   "eslintConfig": {
     "extends": [
