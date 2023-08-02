@@ -1,7 +1,9 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import type { Tank, Genotype, Location, Rack } from './database';
+import { fileURLToPath } from 'url';
 
 type ElectronAPI = {
+    importFromXLSX: (fileName: string) => void,
     readTank: (uid: number) => Promise<Tank | undefined>,
     writeTank: (uid: number, tank: Tank) => void,
     readGenotype: (uid: string) => Promise<Genotype | undefined>,
@@ -16,6 +18,7 @@ type ElectronAPI = {
 };
 
 const exposedAPI: ElectronAPI = {
+    importFromXLSX: (fileName: string): void => {ipcRenderer.invoke('db:importFromXLSX', fileName)},
     readTank: (uid: number): Promise<Tank | undefined> => ipcRenderer.invoke('db:readTank', uid),
     writeTank: (uid: number, tank: Tank): void => { ipcRenderer.invoke('db:writeTank', uid, tank) },
     readGenotype: (uid: string): Promise<Genotype | undefined> => ipcRenderer.invoke('db:readGenotype', uid),

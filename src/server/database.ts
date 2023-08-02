@@ -49,6 +49,8 @@ type Location = {
  * element in the 'data' array.
  */
 abstract class Database {
+
+    abstract importFromXLSX(fileName: string): void;
     /**
      * Returns a Tank object representing the tank with the given UID and
      * fields populated from the database.
@@ -114,6 +116,7 @@ abstract class Database {
      * Attaches the event handlers that send database data back to the renderer.
      */
     public attachHandlers(ipcMain: Electron.IpcMain): void {
+        ipcMain.handle('db:importFromXLSX', (event, fileName: string): void => this.importFromXLSX(fileName));
         ipcMain.handle('db:readTank',  (event, uid: number): (Tank | undefined) => this.readTank(uid));
         ipcMain.handle('db:writeTank', (event, uid: number, tank: Tank): void => this.writeTank(uid, tank));
         ipcMain.handle('db:readGenotype',  (event, uid: string): (Genotype | undefined) => this.readGenotype(uid));

@@ -22,7 +22,7 @@ function createWindow(): void {
 
 // run once initialized
 app.whenReady().then((): void => {
-    new SQLiteDatabase(path.join(__dirname, '..', 'data', 'sqlite3.db'), path.join(__dirname, '..', 'data', 'standardized_input_example.xlsx')).attachHandlers(ipcMain);
+    new SQLiteDatabase(path.join(__dirname, '..', 'data', 'sqlite3.db')).attachHandlers(ipcMain);
 
     createWindow();
 
@@ -35,7 +35,5 @@ app.whenReady().then((): void => {
 
 // Quit when all windows are closed
 app.on('window-all-closed', (): void => {
-    if(process.platform !== 'darwin') {
-        app.quit();
-    }
+    app.quit();
 });

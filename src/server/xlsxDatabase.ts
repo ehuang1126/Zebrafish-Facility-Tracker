@@ -21,6 +21,9 @@ const GENOTYPE_ID_LABEL = 'genotypeID'; // the column header for a genotype's ID
  * element in the 'data' array.
  */
 class XLSXDatabase extends Database {
+    override importFromXLSX(fileName: string): void {
+        throw new Error('Method not implemented.');
+    }
     override writeRack(rack: Rack): void {
         throw new Error('Method not implemented.');
     }

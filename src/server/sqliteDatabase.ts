@@ -37,17 +37,14 @@ class SQLiteDatabase extends Database {
     private _cullTank: (((uid: number) => void) | undefined);
     private _getChildren: (((parentId: string) => Genotype[]) | undefined);
 
-    constructor(filename: string, importFile?: string) {
+    constructor(filename: string) {
         super();
 
         this.db = new SQLite(filename, { fileMustExist: true });
         this.db.pragma('journal_mode = WAL');
-        if(importFile !== undefined) {
-            this.importFromXLSX(importFile);
-        }
     }
 
-    private importFromXLSX(filename: string): void {
+    override importFromXLSX(filename: string): void {
         const data: xlsx.WorkBook = xlsx.readFile(filename);
         const genotypesPage: (xlsx.WorkSheet | undefined) = data.Sheets[GENOTYPES_PAGE_NAME];
         const racksPage: (xlsx.WorkSheet | undefined) = data.Sheets[RACKS_PAGE_NAME];
