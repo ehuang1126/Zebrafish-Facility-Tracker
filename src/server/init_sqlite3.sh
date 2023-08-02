@@ -10,10 +10,10 @@ if [ -f ./data/$DB_NAME ]; then
   timestamp=$(date +%Y-%m-%d_%H-%M-%S)
   # rename the file with the timestamp appended
   mkdir -p ./data/backups/
-  mv ./data/$DB_NAME ./data/backups/backup_$timestamp.db
+  cp ./data/$DB_NAME ./data/backups/backup_$timestamp.db
   echo "existing ${DB_NAME} moved to backups"
+  else 
+    # If doesn't exist, create new database and table
+    echo "creating new ${DB_NAME}"
+    sqlite3 ./data/$DB_NAME < ./src/server/schema.sql
 fi
-
-# Create new database and table
-echo "creating new ${DB_NAME}"
-sqlite3 ./data/$DB_NAME < ./src/server/schema.sql

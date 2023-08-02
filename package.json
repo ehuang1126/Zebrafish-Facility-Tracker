@@ -33,10 +33,10 @@
     "build:macos": "rm -rf dist/ && ./node_modules/.bin/tsc && cd src && find . -name '*.css' -exec ditto {} ../dist/ \\; && cd .. && ./src/server/init_sqlite3.sh",
     "react": "react-scripts start",
     "electron": "electron .",
-    "kill": "fuser -k 3000/tcp",
+    "kill": "kill $(lsof -t -i:3000)",
     "prestart": "npm run build",
     "start": "(BROWSER=none npm run react &) && sleep 3 && npm run electron",
-    "poststart": "npm run kill",
+    "poststart": "npm run kill && npm run export",
     "test": "react-scripts test",
     "export": "./src/server/export_sqlite_to_csv.sh"
   },
