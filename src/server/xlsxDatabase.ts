@@ -21,6 +21,21 @@ const GENOTYPE_ID_LABEL = 'genotypeID'; // the column header for a genotype's ID
  * element in the 'data' array.
  */
 class XLSXDatabase extends Database {
+    override importFromXLSX(fileName: string): void {
+        throw new Error('Method not implemented.');
+    }
+    override writeRack(rack: Rack): void {
+        throw new Error('Method not implemented.');
+    }
+    override mergeTanks(uids: number[]): Tank {
+        throw new Error('Method not implemented.');
+    }
+    override cullTank(uid: number): void {
+        throw new Error('Method not implemented.');
+    }
+    override getChildren(parentId: string): Genotype[] {
+        throw new Error('Method not implemented.');
+    }
     private filename: string;
     private racks: Rack[];
     private tanks: Map<number, Tank>; 
@@ -52,7 +67,7 @@ class XLSXDatabase extends Database {
         this.racks.forEach((rack: Rack): void => {
             rack.tanks.forEach((tank: Tank): void => {
                 this.tanks.set(tank.uid, tank);
-                this.genotypes.get(tank.genotype)?.tanks.push(tank.uid);
+                this.genotypes.get(tank.genotypes[0])?.tanks.push(tank.uid);
             });
         });
     }
@@ -121,6 +136,7 @@ class XLSXDatabase extends Database {
                 0;
         const rack: Rack = {
             rackNum: rackNum,
+            room: '',
             size: XLSXDatabase.getRackShape(db, rackName),
             tanks: [],
         };
@@ -158,11 +174,13 @@ class XLSXDatabase extends Database {
                 0;
         const tank: Tank = {
             loc: {
+                room: "", // TODO this is a placeholder value, since I'll probably never use this class again
                 rack: rackNum,
                 row: '!',
                 col: -1,
             },
-            genotype: '!',
+            dobs: [],
+            genotypes: ['!'],
             uid: -1,
             fields: [],
         };
@@ -177,7 +195,7 @@ class XLSXDatabase extends Database {
             } else if(label === COL_LABEL && data !== undefined) {
                 tank.loc.col = Number(data);
             } else if(label === TANK_GENOTYPE_LABEL && data !== undefined) {
-                tank.genotype = data.toString();
+                tank.genotypes.push(data.toString());
             } else if(label === UID_LABEL) {
                 tank.uid = Number(data);
             } else {

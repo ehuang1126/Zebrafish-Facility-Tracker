@@ -6,6 +6,7 @@
   "private": true,
   "dependencies": {
     "@chakra-ui/react": "^2.2.9",
+    "@electron/rebuild": "github:electron/rebuild",
     "@emotion/react": "^11.10.0",
     "@emotion/styled": "^11.10.0",
     "@testing-library/jest-dom": "^5.16.5",
@@ -15,6 +16,7 @@
     "@types/node": "^16.11.56",
     "@types/react": "^18.0.17",
     "@types/react-dom": "^18.0.6",
+    "better-sqlite3": "^8.5.0",
     "electron": "^20.1.0",
     "framer-motion": "^7.2.1",
     "react": "^18.2.0",
@@ -28,15 +30,16 @@
   },
   "scripts": {
     "build": "run-script-os",
-    "build:linux": "rm -r dist/ && ./node_modules/.bin/tsc && cd src && find -name '*.css' -exec cp --parents {} ../dist/ \\; && cd ..",
-    "build:macos": "rm -rf dist/ && ./node_modules/.bin/tsc && cd src && find . -name '*.css' -exec ditto {} ../dist/ \\; && cd ..",
+    "build:linux": "rm -r dist/ && ./node_modules/.bin/tsc && cd src && find -name '*.css' -exec cp --parents {} ../dist/ \\; && cd .. && ./src/server/init_sqlite3.sh",
+    "build:macos": "rm -rf dist/ && ./node_modules/.bin/tsc && cd src && find . -name '*.css' -exec ditto {} ../dist/ \\; && cd .. && ./src/server/init_sqlite3.sh",
     "react": "react-scripts start",
     "electron": "electron .",
-    "kill": "fuser -k 3000/tcp",
+    "kill": "kill $(lsof -t -i:3000)",
     "prestart": "npm run build",
     "start": "(BROWSER=none npm run react &) && sleep 3 && npm run electron",
-    "poststart": "npm run kill",
-    "test": "react-scripts test"
+    "poststart": "npm run kill && npm run export",
+    "test": "react-scripts test",
+    "export": "./src/server/export_sqlite_to_csv.sh"
   },
   "eslintConfig": {
     "extends": [
@@ -57,6 +60,7 @@
     ]
   },
   "devDependencies": {
+    "@types/better-sqlite3": "^7.6.3",
     "webpack-cli": "^4.10.0"
   }
 }
