@@ -1,6 +1,6 @@
 import { app, BrowserWindow, ipcMain } from 'electron';
 import path from 'path';
-import XLSXDatabase from './server/xlsxDatabase.js';
+import SQLiteDatabase from './server/sqliteDatabase.js';
 
 /**
  * Creates a new window and attaches it to the React process.
@@ -22,7 +22,7 @@ function createWindow(): void {
 
 // run once initialized
 app.whenReady().then((): void => {
-    new XLSXDatabase(path.join(__dirname, '..', 'data', 'sample_input.xlsx')).attachHandlers(ipcMain);
+    new SQLiteDatabase(path.join(__dirname, '..', 'data', 'sqlite3.db')).attachHandlers(ipcMain);
 
     createWindow();
 
@@ -35,7 +35,5 @@ app.whenReady().then((): void => {
 
 // Quit when all windows are closed
 app.on('window-all-closed', (): void => {
-    if(process.platform !== 'darwin') {
-        app.quit();
-    }
+    app.quit();
 });
