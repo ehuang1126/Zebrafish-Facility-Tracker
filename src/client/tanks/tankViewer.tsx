@@ -11,6 +11,7 @@ type Props = {
 type State = {
     tank?: Tank,
     locString?: string,
+    dobsString?: string,
     isEditing: boolean,
 };
 
@@ -23,6 +24,7 @@ class TankViewer extends TabsViewer<Props, State> {
         this.state = {
             tank: undefined,
             locString: undefined,
+            dobsString: undefined,
             isEditing: false,
         };
     }
@@ -44,6 +46,7 @@ class TankViewer extends TabsViewer<Props, State> {
                 this.setState({
                     tank: tank,
                     locString: TankViewer.locToString(tank.loc),
+                    dobsString: TankViewer.dobsToString(tank.dobs),
                 });
             }
         })();
@@ -57,6 +60,16 @@ class TankViewer extends TabsViewer<Props, State> {
     }
 
     /**
+     * Converts an array of Dates into a human-readable and machine-parseable string.
+     */
+    private static dobsToString(dobs: Date[]): string {
+        return dobs.map((date: Date): string => {
+            date = new Date(date);
+            return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+        }).join(',\n');
+    }
+
+    /**
      * Saves the new `locString` into the current state.
      */
     private saveLocString(locString: string): void {
@@ -66,16 +79,24 @@ class TankViewer extends TabsViewer<Props, State> {
     /**
      * Saves the new genotype UID into the current state.
      */
-    private saveGenotype(genotype: string): void {
+    private saveGenotype(genotypes: string): void {
         this.setState((state: Readonly<State>): Readonly<State> => ({
             tank: state.tank !== undefined ? {
                 loc: state.tank.loc,
-                genotype: genotype,
+                genotypes: genotypes.replaceAll(' ', '').split(','), // parses by removing whitespace and splitting using commas
+                dobs: state.tank.dobs,
                 uid: state.tank.uid,
                 fields: state.tank.fields,
             } : undefined,
-            isEditing: this.state.isEditing,
+            isEditing: state.isEditing,
         }));
+    }
+
+    /**
+     * Saves the DOBs into the current state.
+     */
+    private saveDOBString(dobs: string): void {
+        this.setState({dobsString: dobs});
     }
 
     /**
@@ -102,7 +123,8 @@ class TankViewer extends TabsViewer<Props, State> {
 
             const tank: Tank = {
                 loc: state.tank.loc,
-                genotype: state.tank.genotype,
+                genotypes: state.tank.genotypes,
+                dobs: state.tank.dobs,
                 uid: state.tank.uid,
                 fields: Array.from(state.tank.fields),
             }
@@ -151,12 +173,14 @@ class TankViewer extends TabsViewer<Props, State> {
                 const newState: State = {
                     tank: {
                         loc: state.tank.loc,
-                        genotype: state.tank.genotype,
+                        genotypes: state.tank.genotypes,
+                        dobs: state.dobsString?.split(',').map((dob: string): Date => new Date(dob)) ?? [],
                         uid: state.tank.uid,
                         fields: [],
                     },
                     isEditing: !state.isEditing, // toggle editing
                     locString: state.locString,
+                    dobsString: state.dobsString,
                 };
 
                 // I don't know why this is necessary
@@ -173,13 +197,14 @@ class TankViewer extends TabsViewer<Props, State> {
                 // read the location back into a Location object
                 if(newState.locString !== undefined) {
                     // convert `locString` back to a location
-                    const locStringPieces: (RegExpMatchArray | null) = newState.locString.match(/^(\d+),?(\w+),?(\d+)$/);
+                    const locStringPieces: (RegExpMatchArray | null) = newState.locString.match(/^(\d+\w+),?(\d+),?(\w+),?(\d+)$/);
                     if (locStringPieces !== null) {
                         // if the locString was properly formatted
                         const loc: Location = {
-                            rack: Number(locStringPieces[1]),
-                            row: locStringPieces[2].toString().toUpperCase(),
-                            col: Number(locStringPieces[3]),
+                            room: locStringPieces[1].toString().toUpperCase(),
+                            rack: Number(locStringPieces[2]),
+                            row: locStringPieces[3].toString().toUpperCase(),
+                            col: Number(locStringPieces[4]),
                         };
                         newState.tank.loc = loc;
                     }
@@ -215,16 +240,30 @@ class TankViewer extends TabsViewer<Props, State> {
                     }
                 </Td>
             </Tr>,
-            <Tr key='genotype'>
-                <Td>genotype ID</Td>
+            <Tr key='genotypes'>
+                <Td>genotype IDs</Td>
                 <Td>
                     { this.state.isEditing ?
-                        <Textarea value={ this.state.tank?.genotype } rows={ 1 }
+                        <Textarea value={ this.state.tank?.genotypes.toString() } rows={ 1 }
                                 onChange={ (e): void => this.saveGenotype(e.target.value) }
                         /> :
-                        this.state.tank?.genotype !== undefined ?
-                                this.props.jumpController.embedJumps('\\G' + this.state.tank.genotype) :
+                        this.state.tank?.genotypes !== undefined ?
+                                this.state.tank.genotypes.map((genotype: string): JSX.Element[] => {
+                                    return this.props.jumpController.embedJumps('\\G' + genotype)
+                                }) :
                                 undefined
+                    }
+                </Td>
+            </Tr>,
+            <Tr key='dobs'>
+                <Td>DOB(s)</Td>
+                <Td>
+                    { this.state.isEditing ?
+                        <Textarea value={ this.state.dobsString } onChange={ (e): void => this.saveDOBString(e.target.value) }/> 
+                        :
+                        this.state.tank?.dobs !== undefined ?
+                                this.state.tank.dobs.map((date: Date): JSX.Element => <Text>{ new Date(date).toDateString() }</Text>)
+                            :   undefined
                     }
                 </Td>
             </Tr>

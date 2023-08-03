@@ -5,7 +5,7 @@ import type { Location, Tank } from '../server/database';
 
 const CONTROL_SEQUENCES: RegExp = /(\\T.*?\b|\\G.*?\b)/;
 const TANK_SEQUENCE: RegExp = /(\\T.*?\b)/;
-const TANK_PIECES: RegExp = /^\\T(\d+),?(\w+),?(\d+)$/;
+const TANK_PIECES: RegExp = /^\\T(\d+\w+),?(\d+),?(\w+),?(\d+)$/;
 
 class JumpController {
     private view: View;
@@ -38,6 +38,13 @@ class JumpController {
     }
 
     /**
+     * Jumps to tank selector page.
+     */
+    jumpToTankSelector(): void {
+        this.view.setState({ currentTab: 1});
+    }
+
+    /**
      * Registers a handler for a 'jump to Genotype' event.
      */
     registerGenotypeJumpHandler(handler: (uid: string) => void): void {
@@ -54,6 +61,13 @@ class JumpController {
         if(this.genotypeJumpHandler !== undefined) {
             this.genotypeJumpHandler(uid);
         }
+    }
+
+    /**
+     * Jumps to genotype selector page.
+     */
+    jumpToGenotypeSelector(): void {
+        this.view.setState({ currentTab: 2});
     }
 
     /**
@@ -113,9 +127,10 @@ class JumpController {
                 if(locStringPieces !== null) {
                     // if the locString was properly formatted
                     const loc: Location = {
-                        rack: Number(locStringPieces[1]),
-                        row: locStringPieces[2].toString().toUpperCase(),
-                        col: Number(locStringPieces[3]),
+                        room: locStringPieces[1].toString().toUpperCase(),
+                        rack: Number(locStringPieces[2]),
+                        row: locStringPieces[3].toString().toUpperCase(),
+                        col: Number(locStringPieces[4]),
                     };
                     
                     // find the tank at that location
