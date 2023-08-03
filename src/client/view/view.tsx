@@ -7,6 +7,7 @@ import JumpController from '../jumpController';
 import CrossingPage from '../crossing/crossingPage';
 
 import './view.css';
+import SettingsPage from '../settings/settingsPage';
 
 type Props = {};
 
@@ -44,6 +45,7 @@ class View extends React.Component<Props, State> {
                     <Tab key='tanks'>tanks</Tab>
                     <Tab key='genotypes'>genotypes</Tab>
                     <Tab key='crossing'>crossing</Tab>
+                    <Tab key='settings'>settings</Tab>
                 </TabList>
 
                 <TabPanels>
@@ -58,6 +60,9 @@ class View extends React.Component<Props, State> {
                     </TabPanel>
                     <TabPanel key='crossing'>
                         <CrossingPage jumpController={ this.state?.jumpController } />
+                    </TabPanel>
+                    <TabPanel key='settings'>
+                        <SettingsPage jumpController={ this.state?.jumpController } />
                     </TabPanel>
                 </TabPanels>
             </Tabs>

@@ -294,8 +294,6 @@ class SQLiteDatabase extends Database {
      * fields. If the Tank has a Field for a column that does not exist in the
      * database, the column will be created first. If the Tank has more genotypes
      * than the database has columns for, the extra columns will be created first.
-
-     * TODO check for and add novel features
      */
     override writeTank(uid: number, tank: Tank): void {
         if(this._writeTank === undefined) {
@@ -395,8 +393,6 @@ class SQLiteDatabase extends Database {
      * Writes a Genotype object to the database, reading data from the object's
      * fields. If the Genotype has a Field for a column that does not exist in
      * the database, the column will be created first.
-
-     * TODO check for and add novel features
      */
     override writeGenotype(genotype: Genotype): void {
         if(this._writeGenotype === undefined) {
@@ -577,7 +573,7 @@ class SQLiteDatabase extends Database {
 
                     this.db.prepare(query)
                            .run(uid,
-                                new Date().toString(),
+                                new Date().toDateString(),
                                 tank.loc.room,
                                 tank.loc.rack,
                                 SQLiteDatabase.atoi(tank.loc.row),
