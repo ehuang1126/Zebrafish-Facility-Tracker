@@ -38,6 +38,13 @@ class JumpController {
     }
 
     /**
+     * Jumps to tank selector page.
+     */
+    jumpToTankSelector(): void {
+        this.view.setState({ currentTab: 1});
+    }
+
+    /**
      * Registers a handler for a 'jump to Genotype' event.
      */
     registerGenotypeJumpHandler(handler: (uid: string) => void): void {
@@ -54,6 +61,13 @@ class JumpController {
         if(this.genotypeJumpHandler !== undefined) {
             this.genotypeJumpHandler(uid);
         }
+    }
+
+    /**
+     * Jumps to genotype selector page.
+     */
+    jumpToGenotypeSelector(): void {
+        this.view.setState({ currentTab: 2});
     }
 
     /**
