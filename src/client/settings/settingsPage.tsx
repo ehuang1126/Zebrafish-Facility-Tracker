@@ -43,7 +43,10 @@ class SettingsPage extends React.Component<Props, State> {
                                         
                                     </Td>
                                     <Td>
-                                        <Button onClick={(event): void => { window.electronAPI.importFromXLSX('./data/input.xlsx'); }} width={20}>
+                                        <Button onClick={(event): void => { 
+                                            window.electronAPI.importFromXLSX('./data/input.xlsx');
+                                            this.props.jumpController?.jumpToGenotypeSelector();
+                                        }} width={20}>
                                             Import
                                         </Button>
                                     </Td>
