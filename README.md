@@ -10,12 +10,15 @@ Gene editing zebrafish gets extremely complicated very quickly. Different lines 
 5. Go to the `settings` tab and import your data. 
 
 ## Input Format
-1. Download [this Excel sheet](https://docs.google.com/spreadsheets/d/1qK9Pgry0nXH4Pcq5gidWd_J7OUvx0_i_/edit?usp=sharing&ouid=104837976882916963935&rtpof=true&sd=true). This is an example import spreadsheet. The important parts are the sheet and column headers, so you can copy and just replace the data with your own data. 
-2. Please don't change the column names for any UID, rack, row, column, room, DOB, or genotype column.
-3. Make sure UIDs are numbers and DOBs are in mm/dd/yyyy or yyyy-mm-dd format (no need to add zeroes before)
-4. In the tanks tab, genotypeID(s) and DOB(s) are each 1 column. If you have more than 1 genotype in a tank, you can separate them within the same cell by comma
-5. Other than the mentioned columns above, feel free to prune the genotypes/tanks sheets or leave cells empty
-6. You can also add any columns to track any additional data, as long as the column names are not SQL keywords and do not contain special characters (underscore is fine). 
+1. Download [this Excel sheet](https://docs.google.com/spreadsheets/d/1qK9Pgry0nXH4Pcq5gidWd_J7OUvx0_i_/edit?usp=sharing&ouid=104837976882916963935&rtpof=true&sd=true). This is an example import spreadsheet. The important parts are the sheet and column headers, so you can copy and just replace the data with your own data.
+2. In the `racks` sheet, enter each rack with a **unique** ID and the size of each rack. This defines the locations you can use, so please enter this carefully. 
+3. In the `genotypes` sheet, enter your different genotypes.
+4. In the `tanks` sheet, enter the tanks you want to track with locations defined in the `racks` sheet.
+    - Genotype ID(s) and DOB(s) are each 1 column. If you have more than 1 genotype in a tank, you can separate them within the same cell by comma
+5. Please don't change the column names for any UID, rack, row, column, room, DOB, or genotype column.
+6. Make sure UIDs are numbers and DOBs are in mm/dd/yyyy or yyyy-mm-dd format (no need to add zeroes before)
+8. Other than the mentioned columns above, feel free to prune the genotypes/tanks sheets or leave cells empty
+9. You can also add any columns to track any additional data in the `genotypes` and `tanks, as long as the column names are not SQL keywords and do not contain special characters (underscore is fine). 
     - For example, "fish_exists" would be fine as a column header but "exists" would not be.
     - Spaces will automatically be replaced with underscores.
 
