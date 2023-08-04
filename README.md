@@ -28,7 +28,7 @@ Gene editing zebrafish gets extremely complicated very quickly. Different lines 
     1. Delete the node_modules folder.
     2. Delete the package-lock.json file.
     3. Run `npm install`.
-    4. Run ./node_modules/.bin/electron-rebuild
+    4. Run `./node_modules/.bin/electron-rebuild`
     5. Try `npm start` again. 
 
 ## Workflow
