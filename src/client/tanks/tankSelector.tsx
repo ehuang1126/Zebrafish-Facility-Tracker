@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, SimpleGrid, Spacer, Stack, Text, Textarea, Wrap } from '@chakra-ui/react';
+import { Button, SimpleGrid, Stack, Text, Textarea, Wrap } from '@chakra-ui/react';
 import type { Location, Rack, Tank } from '../../server/database';
 
 type Props = {

@@ -30,7 +30,7 @@
   },
   "scripts": {
     "build": "run-script-os",
-    "build:linux": "rm -r dist/ && ./node_modules/.bin/tsc && cd src && find -name '*.css' -exec cp --parents {} ../dist/ \\; && cd .. && ./src/server/init_sqlite3.sh",
+    "build:linux:windows": "rm -r dist/ && ./node_modules/.bin/tsc && cd src && find -name '*.css' -exec cp --parents {} ../dist/ \\; && cd .. && ./src/server/init_sqlite3.sh",
     "build:macos": "rm -rf dist/ && ./node_modules/.bin/tsc && cd src && find . -name '*.css' -exec ditto {} ../dist/ \\; && cd .. && ./src/server/init_sqlite3.sh",
     "react": "react-scripts start",
     "electron": "electron .",
