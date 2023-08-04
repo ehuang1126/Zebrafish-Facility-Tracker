@@ -339,7 +339,7 @@ class SQLiteDatabase extends Database {
                     // track all fields
                     for(const field of tank.fields) {
                         // remove all spaces from label so that query works as intended
-                        let label: string = field.label.toString().replaceAll(' ', '_'); 
+                        let label: string = field.label.toString().replaceAll(' ', '_').replaceAll('(', '').replaceAll(')', ''); 
                         query += ", " + label;
                         data.push(tank.fields[tank.fields.indexOf(field)].data);
                         // check that the column exists. if not, add it to the table
