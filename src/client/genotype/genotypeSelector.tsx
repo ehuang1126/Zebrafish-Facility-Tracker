@@ -37,6 +37,9 @@ class GenotypeSelector extends React.Component<Props, State> {
                 });
     }
 
+    /**
+     * makes a new genotype and opens that page.
+     */
     private newGenotype(): void {
         
         // get next free uid
