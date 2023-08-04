@@ -97,6 +97,7 @@ class GenotypeViewer extends TabsViewer<Props, State> {
         // parses all the new fields for location-based jump links and collects
         // the converted results
         Promise.all(this.state.genotype.fields.map((field: Field): Promise<string> => {
+            if(!field.data) field.data = '';
             return this.props.jumpController.convertLocationJumpLink(field.data.toString());
         })).then((fields: string[]): void => {
             // TODO This improperly updates state without checking current state,

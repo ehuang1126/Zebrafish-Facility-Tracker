@@ -38,6 +38,26 @@ class GenotypeSelector extends React.Component<Props, State> {
     }
 
     /**
+     * makes a new genotype and opens that page.
+     */
+    private newGenotype(): void {
+        
+        // get next free uid
+        let i: number = (this.state.genotypes?.size ?? -1) + 1;
+        (async (): Promise<void> => {
+            
+            
+            window.electronAPI.writeGenotype({
+                uid: i.toString(),
+                tanks: [],
+                fields: [],
+            })
+        })().then((): void => {
+            this.selectGenotype(i.toString());
+        });
+    }
+
+    /**
      * Filters the displayed genotypes. The current algorithm selects for any Genotypes that
      * contain all of the words in the query in at least one field. 
      */
@@ -99,6 +119,10 @@ class GenotypeSelector extends React.Component<Props, State> {
                             );
                         }) }
                     </Wrap>
+
+                    <Button onClick={this.newGenotype.bind(this)}>
+                        new genotype
+                    </Button>
                 </Stack>
                 
             );

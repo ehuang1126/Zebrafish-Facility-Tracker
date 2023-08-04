@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS genotypes (
     published_id TEXT,
     tanks TEXT,
 --    owner TEXT NOT NULL,
-    fish TEXT NOT NULL,
+    fish TEXT,
     notes TEXT
 --    exists INTEGER NOT NULL,
 --    light_cycle INTEGER,

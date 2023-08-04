@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, SimpleGrid, Stack, Text, Wrap } from '@chakra-ui/react';
+import { Button, SimpleGrid, Spacer, Stack, Text, Textarea, Wrap } from '@chakra-ui/react';
 import type { Location, Rack, Tank } from '../../server/database';
 
 type Props = {
@@ -9,6 +9,7 @@ type Props = {
 type State = {
     racks?: Rack[],
     currentRack?: number, // currentRack is an index of racks
+    newTankLocString?: string,
 };
 
 class TankSelector extends React.Component<Props, State> {
@@ -40,6 +41,45 @@ class TankSelector extends React.Component<Props, State> {
                         this.props.reportTank(tank.uid);
                     }
                 });
+    }
+
+    /**
+     * makes a new tank and opens that page.
+     */
+    private newTank(locString: string): void {
+        // convert `locString` back to a location
+        let loc: Location
+        const locStringPieces: (RegExpMatchArray | null) = locString.match(/(\d+),?(\w+),?(\d+)$/);
+            
+            if (locStringPieces !== null) {
+                // if the locString was properly formatted
+                loc = {
+                    room: 'room',
+                    rack: Number(locStringPieces[1]),
+                    row: locStringPieces[2].toString().toUpperCase(),
+                    col: Number(locStringPieces[3]),
+                };
+            } else { // TODO: throw an error
+                loc = {
+                    room: 'room', 
+                    rack: 0,
+                    row: '',
+                    col: 0,
+                }
+            }
+        (async (): Promise<void> => {
+            // get next free uid
+            const uid: number = (this.state.racks?.map((rack: Rack): number => rack.tanks.length).reduce((prev: number, curr: number): number => prev + curr) ?? -1) + 1;            
+            window.electronAPI.writeTank(uid, {
+                uid: uid,
+                loc: loc,
+                genotypes: [],
+                dobs: [],
+                fields: [],
+            })
+        })().then((): void => {
+            this.selectTank(loc);
+        });
     }
 
     override render(): JSX.Element {
@@ -74,6 +114,14 @@ class TankSelector extends React.Component<Props, State> {
                     </Stack> :
                     <div />
                 }
+                <Stack direction={'row'}>
+                    <Textarea placeholder='new tank location' value={this.state.newTankLocString} onChange={(event): void => {this.setState({newTankLocString: event.target.value})}} rows={1} width={300}/>
+
+                    <Button onClick={(event): void => {this.newTank(this.state.newTankLocString ?? '')}}>
+                        new tank
+                    </Button>
+                </Stack>
+                
             </Stack>
         );
     }

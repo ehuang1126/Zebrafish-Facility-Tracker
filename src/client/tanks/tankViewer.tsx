@@ -160,6 +160,7 @@ class TankViewer extends TabsViewer<Props, State> {
         // parses all the new fields for location-based jump links and collects
         // the converted results
         Promise.all(this.state.tank.fields.map((field: Field): Promise<string> => {
+            if(!field.data) field.data = '';
             return this.props.jumpController.convertLocationJumpLink(field.data.toString());
         })).then((fields: string[]): void => {
             // TODO This improperly updates state without checking current state,
@@ -197,14 +198,14 @@ class TankViewer extends TabsViewer<Props, State> {
                 // read the location back into a Location object
                 if(newState.locString !== undefined) {
                     // convert `locString` back to a location
-                    const locStringPieces: (RegExpMatchArray | null) = newState.locString.match(/^(\d+\w+),?(\d+),?(\w+),?(\d+)$/);
+                    const locStringPieces: (RegExpMatchArray | null) = newState.locString.match(/(\d+),?(\w+),?(\d+)$/);
                     if (locStringPieces !== null) {
                         // if the locString was properly formatted
                         const loc: Location = {
-                            room: locStringPieces[1].toString().toUpperCase(),
-                            rack: Number(locStringPieces[2]),
-                            row: locStringPieces[3].toString().toUpperCase(),
-                            col: Number(locStringPieces[4]),
+                            room: state.tank.loc.room,
+                            rack: Number(locStringPieces[1]),
+                            row: locStringPieces[2].toString().toUpperCase(),
+                            col: Number(locStringPieces[3]),
                         };
                         newState.tank.loc = loc;
                     }
