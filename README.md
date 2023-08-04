@@ -8,7 +8,7 @@ Gene editing zebrafish gets extremely complicated very quickly. Different lines 
 3. In the main directory, create a directory called `data`.
 4. Move your input file named `input.xlsx` (make sure it is in the format listed below) to the `data` directory. 
 5. Run `npm install` and then run `npm start`.
-6. Go to the `settings` tab and import your data. 
+6. Go to the `settings` tab and import your data. You may need to close and reopen the database if the data does not show up. 
 
 ## Input Format
 1. Download [this Excel sheet](https://docs.google.com/spreadsheets/d/1qK9Pgry0nXH4Pcq5gidWd_J7OUvx0_i_/edit?usp=sharing&ouid=104837976882916963935&rtpof=true&sd=true). This is an example import spreadsheet. The important parts are the sheet and column headers, so you can copy and just replace the data with your own data.
@@ -23,13 +23,20 @@ Gene editing zebrafish gets extremely complicated very quickly. Different lines 
     - For example, "fish_exists" would be fine as a column header but "exists" would not be.
     - Spaces will automatically be replaced with underscores.
 
-## Installation Troublshooting
+## Installation Troubleshooting
 - If you see something along the lines of `BETTER-SQLITE3 WAS COMPILED AGAINST A DIFFERENT NODE VERSION`, follow the following steps:
     1. Delete the node_modules folder.
     2. Delete the package-lock.json file.
     3. Run `npm install`.
     4. Run ./node_modules/.bin/electron-rebuild
     5. Try `npm start` again. 
+
+## Workflow
+Creating a new cross: 
+1. Go to the `crossing` page to set up the parents and create the new genotype.
+2. Cross the fish.
+3. Make a new Tank on the `tanks` page for these new fish.
+4. Add the corresponding new genotype to this new Tank. 
 
 ## Contribution
 - This is an open-source project. Feel free to contribute by raising issues and creating pull requests.
