@@ -17,7 +17,7 @@ Gene editing zebrafish gets extremely complicated very quickly. Different lines 
 4. In the `tanks` sheet, enter the tanks you want to track with locations defined in the `racks` sheet.
     - Genotype ID(s) and DOB(s) are each 1 column. If you have more than 1 genotype in a tank, you can separate them within the same cell by comma
 5. Please don't change the column names for any UID, rack, row, column, room, DOB, or genotype column.
-6. Make sure UIDs are numbers and DOBs are in yyyy-mm-dd (recommended) or mm/dd/yyyy (not officially supported) format (no need to add zeroes before)
+6. Make sure UIDs are numbers and DOBs are in `yyyy-mm-dd` (recommended) or `mm/dd/yyyy` (not officially supported) format (no need to add zeroes before)
 8. Other than the mentioned columns above, feel free to prune the genotypes/tanks sheets or leave cells empty
 9. You can also add any columns to track any additional data in the `genotypes` and `tanks, as long as the column names are not SQL keywords and do not contain special characters (underscore is fine). 
     - For example, "fish_exists" would be fine as a column header but "exists" would not be.
